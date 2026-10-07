@@ -10,4 +10,5 @@ class AppColors {
   static const Success = Color(0xff20A36A);
   static const Error = Color(0xffE05252);
   static const Orange = Color(0xffF59E0B);
+  static const bordercolor = Color(0xffE8EAF1);
 }

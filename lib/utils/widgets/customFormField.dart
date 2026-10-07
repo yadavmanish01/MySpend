@@ -52,7 +52,7 @@ class CustomFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultFill = fillColor ?? Colors.white;
+    final defaultFill = fillColor ?? AppColors.Background;
     final defaultTextColor = inputColor ?? AppColors.textMuted;
 
     return Container(
@@ -97,13 +97,13 @@ class CustomFormField extends StatelessWidget {
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: enableBorder
-                ? const BorderSide(color: AppColors.primary)
+                ? const BorderSide(color: AppColors.bordercolor)
                 : BorderSide.none,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: enableBorder
-                ? const BorderSide(color: AppColors.primary)
+                ? const BorderSide(color: AppColors.bordercolor)
                 : BorderSide.none,
           ),
           contentPadding: contentPadding ??

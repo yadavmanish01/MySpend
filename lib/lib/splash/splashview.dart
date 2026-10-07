@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_spend/lib/splash/splashServices.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/extensions/sizedboxext.dart';
@@ -11,6 +12,13 @@ class Splashview extends StatefulWidget {
 }
 
 class _SplashviewState extends State<Splashview> {
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    SplashServices().checkAuthentication(context);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
