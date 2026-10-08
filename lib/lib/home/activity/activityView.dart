@@ -169,7 +169,7 @@ class _ActivityviewState extends State<Activityview> {
                   );
                 },
               ),
-              100.ph,
+              30.ph,
             ],
           ),
         ),

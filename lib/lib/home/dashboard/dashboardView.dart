@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:my_spend/lib/home/activity/activityView.dart';
 import 'package:my_spend/lib/home/budgets/budgetsView.dart';
 import 'package:my_spend/lib/home/homeview/homeView.dart';
+import 'package:my_spend/lib/home/profile/profileView.dart';
+import 'package:my_spend/lib/home/scanReceipt/scanReceipt.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
-
 import '../../../utils/extensions/sizedboxext.dart';
 
 class DashboardView extends StatefulWidget {
@@ -14,14 +15,14 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
-   HomeView(),
-   Activityview(),
-    Center(child: Text("Scan Camera / QR Screen")),
-   Budgetsview(),
-    Center(child: Text("Profile Screen")),
+    HomeView(),
+    Activityview(),
+   Scanreceipt(),
+    Budgetsview(),
+    Profileview(),
   ];
 
   void _onItemTapped(int index) {
@@ -36,7 +37,9 @@ class _DashboardViewState extends State<DashboardView> {
       child: Scaffold(
         body: _screens[_selectedIndex],
         bottomNavigationBar: Stack(
-          clipBehavior: Clip.none, ///clipbehaviour.none so that it cannot be cutted if it
+          clipBehavior: Clip.none,
+
+          ///clipbehaviour.none so that it cannot be cutted if it
           ///takes more height then bottomnavigationbar
           alignment: Alignment.topCenter,
           children: [
@@ -60,7 +63,11 @@ class _DashboardViewState extends State<DashboardView> {
                   _buildNavItem(Icons.home_rounded, "Home", 0),
                   _buildNavItem(Icons.bar_chart_rounded, "Activity", 1),
                   const SizedBox(width: 56),
-                  _buildNavItem(Icons.account_balance_wallet_rounded, "Budget", 3),
+                  _buildNavItem(
+                    Icons.account_balance_wallet_rounded,
+                    "Budget",
+                    3,
+                  ),
                   _buildNavItem(Icons.person_rounded, "Profile", 4),
                 ],
               ),
@@ -78,7 +85,7 @@ class _DashboardViewState extends State<DashboardView> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color:AppColors.primary.withOpacity(0.4),
+                        color: AppColors.primary.withOpacity(0.4),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
@@ -100,7 +107,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final bool isSelected = _selectedIndex == index;
-    final Color activeColor =AppColors.primary;
+    final Color activeColor = AppColors.primary;
     const Color inactiveColor = Colors.grey;
 
     return Expanded(
@@ -117,7 +124,7 @@ class _DashboardViewState extends State<DashboardView> {
               color: isSelected ? activeColor : inactiveColor,
               size: 24,
             ),
-           4.ph,
+            4.ph,
             Text(
               label,
               style: TextStyle(
