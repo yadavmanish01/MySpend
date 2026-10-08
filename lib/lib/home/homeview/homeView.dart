@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_spend/lib/home/addExpenses/addExpensesView.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
+import 'package:my_spend/utils/widgets/custom_button.dart';
 
 import '../../../utils/Appstyle/appStyle.dart';
 import '../../../utils/extensions/sizedboxext.dart';
@@ -10,6 +12,7 @@ class HomeView extends StatefulWidget {
   @override
   State<HomeView> createState() => _HomeViewState();
 }
+
 final List<Map<String, dynamic>> _transactions = [
   {
     "title": "Groceries",
@@ -47,7 +50,6 @@ final List<Map<String, dynamic>> _transactions = [
     "letter": "C",
   },
 ];
-
 
 class _HomeViewState extends State<HomeView> {
   @override
@@ -180,15 +182,36 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ],
               ),
-              15.ph,
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Recent transactions",
-                  style: AppTextStyles.headingLarge,
-                ),
+              25.ph,
+              CustomButton(
+                prefixIcon: Icons.analytics_outlined,
+                title: "Add Expenses",
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Addexpensesview()),
+                  );
+                },
               ),
-              15.ph,
+              25.ph,
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Recent transactions",
+                    style: AppTextStyles.headingLarge,
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      "See All",
+                      style: AppTextStyles.headingSmall.copyWith(decoration: TextDecoration.underline,
+                        color: AppColors.Error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              35.ph,
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -237,8 +260,8 @@ class _HomeViewState extends State<HomeView> {
                               ),
                               4.ph,
                               Text(
-                                  item["category"],
-                                  style: AppTextStyles.captionBold
+                                item["category"],
+                                style: AppTextStyles.captionBold,
                               ),
                             ],
                           ),

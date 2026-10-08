@@ -74,7 +74,7 @@ class _ProfileviewState extends State<Profileview> {
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Security",
+                      "Saving Goals",
                       style: AppTextStyles.bodyLarge,
                     ),
                     IconButton(
