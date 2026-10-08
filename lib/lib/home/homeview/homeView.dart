@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_spend/lib/home/activity/activityView.dart';
 import 'package:my_spend/lib/home/addExpenses/addExpensesView.dart';
+import 'package:my_spend/lib/notification/notificationView.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
 
@@ -74,7 +76,14 @@ class _HomeViewState extends State<HomeView> {
                 children: [
                   Text("Your finances", style: AppTextStyles.headingLarge),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Notificationview(),
+                        ),
+                      );
+                    },
                     icon: Icon(Icons.notifications_none),
                   ),
                 ],
@@ -194,17 +203,22 @@ class _HomeViewState extends State<HomeView> {
                 },
               ),
               25.ph,
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Recent transactions",
                     style: AppTextStyles.headingLarge,
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () { Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Activityview()),
+                    );},
                     child: Text(
                       "See All",
-                      style: AppTextStyles.headingSmall.copyWith(decoration: TextDecoration.underline,
+                      style: AppTextStyles.headingSmall.copyWith(
+                        decoration: TextDecoration.underline,
                         color: AppColors.Error,
                       ),
                     ),
