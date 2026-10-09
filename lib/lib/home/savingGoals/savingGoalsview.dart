@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_spend/lib/home/savingGoals/savingGoadDetails/savingDetailsView.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
 
@@ -28,60 +29,70 @@ class _SavinggoalsviewState extends State<Savinggoalsview> {
               ListView.separated(
                 shrinkWrap: true,
                 itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 15,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Savingdetailsview(),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Emergency Fund",
-                          style: AppTextStyles.headingMedium,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "₹32,000 / ₹50,000",
-                              style: AppTextStyles.captionBold.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "64%",
-                              style: AppTextStyles.captionBold.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        7.ph,
-                        LinearProgressIndicator(
-                          value: 0.4,
-                          minHeight: 8,
-                          backgroundColor: AppColors.textMuted.withOpacity(
-                            0.3,
-                          ), // inactive color
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary, // active color
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 15,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Emergency Fund",
+                            style: AppTextStyles.headingMedium,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "₹32,000 / ₹50,000",
+                                style: AppTextStyles.captionBold.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                "64%",
+                                style: AppTextStyles.captionBold.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          7.ph,
+                          LinearProgressIndicator(
+                            value: 0.4,
+                            minHeight: 8,
+                            backgroundColor: AppColors.textMuted.withOpacity(
+                              0.3,
+                            ), // inactive color
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.primary, // active color
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -89,8 +100,8 @@ class _SavinggoalsviewState extends State<Savinggoalsview> {
                 itemCount: 5,
               ),
               50.ph,
-              CustomButton(title: "Create New Goal",onPressed: (){},),
-              50.ph
+              CustomButton(title: "Create New Goal", onPressed: () {}),
+              50.ph,
             ],
           ),
         ),

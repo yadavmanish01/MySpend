@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_spend/lib/auth/login/loginView.dart';
+import 'package:my_spend/routes/routesName.dart';
 import '../../services/sessionController.dart';
 
 class SplashServices {
@@ -15,31 +17,19 @@ class SplashServices {
           if (SessionController.isLogin ?? false) {
             Timer(
               Duration(seconds: 2),
-                  () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) =>const Loginview()), // Replace with your Home Widget
-                    (route) => false,
-              ),
+                  () => context.pushReplacementNamed(Routesname.dashBoard),
             );
           } else {
             Timer(
                Duration(seconds: 2),
-              () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) =>const Loginview()), // Replace with your Home Widget
-                    (route) => false,
-              ),
+              () => context.pushReplacementNamed(Routesname.login),
             );
           }
         })
         .onError((error, stackTrace) {
           Timer(
             const Duration(seconds: 2),
-            () => Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const Loginview()), // Replace with your Login Widget
-                  (route) => false,
-            ),
+            () => context.pushReplacementNamed(Routesname.login),
           );
         });
   }

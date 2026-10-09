@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_spend/lib/home/activity/activityView.dart';
 import 'package:my_spend/lib/home/addExpenses/addExpensesView.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
+import 'package:my_spend/routes/routesName.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
 
@@ -211,10 +213,7 @@ class _HomeViewState extends State<HomeView> {
                     style: AppTextStyles.headingLarge,
                   ),
                   TextButton(
-                    onPressed: () { Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Activityview()),
-                    );},
+                    onPressed: () {context.goNamed(Routesname.activity);},
                     child: Text(
                       "See All",
                       style: AppTextStyles.headingSmall.copyWith(

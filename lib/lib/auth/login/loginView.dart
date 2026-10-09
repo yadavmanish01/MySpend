@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_spend/lib/home/dashboard/dashboardView.dart';
+import 'package:my_spend/routes/routesName.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/customFormField.dart';
@@ -67,10 +69,7 @@ class _LoginviewState extends State<Loginview> {
                 ),
               ),
               30.ph,
-              CustomButton(onPressed: () { Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => DashboardView()),
-              );}, title: "Sign In"),
+              CustomButton(onPressed: () {context.goNamed(Routesname.dashBoard);}, title: "Sign In"),
               15.ph,
               Text("or continue with", style: AppTextStyles.captionBold),
               15.ph,
