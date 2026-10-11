@@ -54,6 +54,59 @@ class _ActivityviewState extends State<Activityview> {
     },
   ];
 
+  void _showExportBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Export Expense Report", style: AppTextStyles.headingLarge),
+              10.ph,
+              Text(
+                "Choose format to download your transaction history:",
+                style: AppTextStyles.captionBold,
+              ),
+              20.ph,
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                title: const Text("Export as PDF Statement"),
+                subtitle: const Text("Includes category charts & total summary"),
+                trailing: const Icon(Icons.download),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("PDF Report generated!")),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.table_chart, color: Colors.green),
+                title: const Text("Export as CSV Sheet"),
+                subtitle: const Text("Spreadsheet compatible data format"),
+                trailing: const Icon(Icons.download),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("CSV Data exported!")),
+                  );
+                },
+              ),
+              10.ph,
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,7 +117,16 @@ class _ActivityviewState extends State<Activityview> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               10.ph,
-              Text("Transactions", style: AppTextStyles.headingLarge),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Transactions", style: AppTextStyles.headingLarge),
+                  IconButton(
+                    icon: const Icon(Icons.file_download_outlined, color: AppColors.primary),
+                    onPressed: () => _showExportBottomSheet(context),
+                  ),
+                ],
+              ),
               20.ph,
               const CustomFormField(
                 prefixIcon: Icon(Icons.search),

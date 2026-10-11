@@ -1,6 +1,10 @@
+import 'dart:ui';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:my_spend/lib/auth/login/loginView.dart';
+import 'package:my_spend/lib/auth/signup/signupView.dart';
 import 'package:my_spend/lib/home/activity/activityView.dart';
 import 'package:my_spend/lib/home/addExpenses/addExpensesView.dart';
 import 'package:my_spend/lib/home/budgets/budgetDetails/budgetDetailsView.dart';
@@ -13,9 +17,33 @@ import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/home/scanReceipt/scanReceipt.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
 import 'package:my_spend/routes/routesName.dart';
+import 'firebase_options.dart';
 import 'lib/splash/splashview.dart';
 
-void main() {
+void main()async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Flutter framework ke unhandled errors
+  FlutterError.onError = (errorDetails) {
+    FirebaseCrashlytics.instance.recordFlutterFatalError(
+      errorDetails,
+    );
+  };
+
+  // Unhandled asynchronous errors
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(
+      error,
+      stack,
+      fatal: true,
+    );
+
+    return true;
+  };
   runApp(MyApp());
 }
 
@@ -48,6 +76,11 @@ class MyApp extends StatelessWidget {
         name: Routesname.login,
         path: "/login",
         builder: ((context, state) => const Loginview()),
+      ),
+      GoRoute(
+        name: Routesname.signup,
+        path: "/signup",
+        builder: ((context, state) => const Signup()),
       ),
       GoRoute(
         name: Routesname.profile,

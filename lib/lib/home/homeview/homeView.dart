@@ -125,6 +125,52 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
               15.ph,
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7B61FF), Color(0xFF5B5CE2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Colors.amber, size: 28),
+                    12.pw,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "AI Financial Insight",
+                            style: AppTextStyles.captionBold.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          4.ph,
+                          Text(
+                            "You spent 12% less on food this week! Great job staying within budget.",
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              15.ph,
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

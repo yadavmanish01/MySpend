@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "513642196062",
+    "project_id": "myspend-45877",
+    "storage_bucket": "myspend-45877.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:513642196062:android:df5c7a2ee8841d150c98cf",
+        "android_client_info": {
+          "package_name": "com.manish.my_spend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1zhngOC-aUYYOlSjVchYgV0q-p9nx4gs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

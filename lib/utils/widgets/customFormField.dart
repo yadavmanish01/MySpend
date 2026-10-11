@@ -9,6 +9,8 @@ class CustomFormField extends StatelessWidget {
   final Widget? prefixIcon;
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
+  final ValueChanged<String>? onChanged;
+  final FocusNode? focusNode;
   final bool obscureText;
   final Color? fillColor;
   final Color? inputColor;
@@ -33,6 +35,8 @@ class CustomFormField extends StatelessWidget {
     this.prefixIcon,
     this.validator,
     this.onSaved,
+    this.onChanged,
+    this.focusNode,
     this.onTap,
     this.obscureText = false,
     this.fillColor,
@@ -56,18 +60,10 @@ class CustomFormField extends StatelessWidget {
     final defaultTextColor = inputColor ?? AppColors.textMuted;
 
     return Container(
-      decoration: enableShadow
-          ? BoxDecoration(
-        // boxShadow: [
-        //   BoxShadow(
-        //     color: CustomAppTheme.primaryBlue.withOpacity(0.1),
-        //     blurRadius: 6,
-        //     offset: const Offset(0, 3),
-        //   ),
-        // ],
-      )
-          : null,
+      decoration: enableShadow ? const BoxDecoration() : null,
       child: TextFormField(
+        focusNode: focusNode,
+        onChanged: onChanged,
         onTapOutside: (event) => FocusScope.of(context).unfocus(),
         minLines: minLines,
         maxLines: maxLines,

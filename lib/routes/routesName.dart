@@ -2,6 +2,7 @@
 class Routesname {
   //auth
   static const login = 'login';
+  static const signup = 'signup';
   static const splash = 'splash';
   static const profile = 'profile';
   static const budgets = 'budgets';
