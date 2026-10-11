@@ -1,21 +1,41 @@
 part of 'signup_bloc.dart';
 
-class SignupState extends Equatable{
+class SignupState extends Equatable {
+  final String name;
   final String email;
   final String password;
+  final bool showPassword;
   final PostApiStatus postApiStatus;
-  const SignupState({this.email='',this.password='',
-  this.postApiStatus=PostApiStatus.initial});
+  final String message;
 
-  SignupState copyWith({String? email,
-  String? password}){return SignupState(email: email??this.email,
-  password: password??this.password);}
+  const SignupState({
+    this.name = '',
+    this.email = '',
+    this.password = '',
+    this.showPassword = true,
+    this.postApiStatus = PostApiStatus.initial,
+    this.message = '',
+  });
 
+  SignupState copyWith({
+    String? name,
+    String? email,
+    String? password,
+    bool? showPassword,
+    PostApiStatus? postApiStatus,
+    String? message,
+  }) {
+    return SignupState(
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      showPassword: showPassword ?? this.showPassword,
+      postApiStatus: postApiStatus ?? this.postApiStatus,
+      message: message ?? this.message,
+    );
+  }
 
   @override
-  // TODO: implement props
-  List<Object?> get props =>[email,password];
-
+  List<Object?> get props =>
+      [name, email, password, showPassword, postApiStatus, message];
 }
-
-

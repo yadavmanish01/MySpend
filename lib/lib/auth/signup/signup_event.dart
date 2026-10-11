@@ -1,30 +1,47 @@
 part of 'signup_bloc.dart';
 
 @immutable
-sealed class SignupEvent extends Equatable{}
-
-class EmailChangedEvents extends SignupEvent{
-  final String email;
-  EmailChangedEvents({required this.email});
+abstract class SignupEvent extends Equatable {
+  const SignupEvent();
 
   @override
-  // TODO: implement props
+  List<Object?> get props => [];
+}
+
+class NameChangedEvent extends SignupEvent {
+  final String name;
+  const NameChangedEvent({required this.name});
+
+  @override
+  List<Object?> get props => [name];
+}
+
+class EmailChangedEvent extends SignupEvent {
+  final String email;
+  const EmailChangedEvent({required this.email});
+
+  @override
   List<Object?> get props => [email];
 }
 
-class PasswordChangeEvents extends SignupEvent{
+class PasswordChangedEvent extends SignupEvent {
   final String password;
-  PasswordChangeEvents({required this.password});
+  const PasswordChangedEvent({required this.password});
 
   @override
-  // TODO: implement props
   List<Object?> get props => [password];
 }
 
-class SignupApiEvents extends SignupEvent{
-  SignupApiEvents();
+class PasswordVisibilityEvent extends SignupEvent {
+  const PasswordVisibilityEvent();
 
   @override
-  // TODO: implement props
+  List<Object?> get props => [];
+}
+
+class SignupSubmittedEvent extends SignupEvent {
+  const SignupSubmittedEvent();
+
+  @override
   List<Object?> get props => [];
 }
