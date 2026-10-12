@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
+import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/lib/home/profile/logout/logout_bloc.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
@@ -158,8 +159,16 @@ class _ProfileContentState extends State<_ProfileContent> {
                 20.ph,
                 const CircleAvatar(radius: 50),
                 10.ph,
-                Text("Manish Yadav", style: AppTextStyles.headingLarge),
-                Text("manish@example.com", style: AppTextStyles.captionBold),
+                Text(
+                  FirebaseAuthService().currentUser?.displayName ??
+                      FirebaseAuthService().currentUser?.email?.split('@').first ??
+                      "User",
+                  style: AppTextStyles.headingLarge,
+                ),
+                Text(
+                  FirebaseAuthService().currentUser?.email ?? "",
+                  style: AppTextStyles.captionBold,
+                ),
                 15.ph,
                 _buildMenuTile(
                   title: "Personal information",

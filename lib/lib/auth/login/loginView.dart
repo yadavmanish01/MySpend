@@ -11,6 +11,7 @@ import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/customFormField.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
 
+import '../../../firebase_services/firebase_crashlytics_service.dart';
 import '../../../utils/extensions/sizedboxext.dart';
 
 class Loginview extends StatelessWidget {
@@ -135,7 +136,12 @@ class _LoginBodyState extends State<_LoginBody> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {FirebaseCrashlyticsService().recordError(
+                      Exception("Test Crashlytics Error"),
+                      StackTrace.current,
+                      reason: "Testing Crashlytics Integration",
+                      fatal: true,
+                    );},
                     child: Text(
                       "Forgot?",
                       style: AppTextStyles.bodyMuted.copyWith(

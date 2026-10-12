@@ -1,11 +1,11 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:my_spend/firebase_services/firebase_analytics_service.dart';
+import 'package:my_spend/firebase_services/firebase_app_check_service.dart';
+import 'package:my_spend/firebase_services/firebase_crashlytics_service.dart';
+import 'package:my_spend/firebase_services/firebase_messaging_service.dart';
+import 'package:my_spend/firebase_services/firebase_remote_config_service.dart';
 import 'firebase_options.dart';
 import 'lib/auth/login/loginView.dart';
 import 'lib/auth/signup/signupView.dart';
@@ -26,45 +26,22 @@ import 'routes/routesName.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. Firebase Core Initialization
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 1. Firebase App Check (Debug aur Release dono handle karega)
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: kDebugMode
-        ? AndroidProvider.debug
-        : AndroidProvider.playIntegrity,
-    appleProvider: kDebugMode
-        ? AppleProvider.debug
-        : AppleProvider.deviceCheck,
-  );
+  // 2. Firebase Crashlytics Service
+  await FirebaseCrashlyticsService().initCrashlytics();
 
-  // Firebase Remote Config Setup
-  final remoteConfig = FirebaseRemoteConfig.instance;
-  await remoteConfig.setConfigSettings(
-    RemoteConfigSettings(
-      fetchTimeout: const Duration(seconds: 10),
-      // Debug me 0 rakhein taaki console changes turant mil jayein
-      minimumFetchInterval: kDebugMode ? Duration.zero : const Duration(hours: 1),
-    ),
-  );
-  // Default values jo fetch fail hone par kaam karengi
-  await remoteConfig.setDefaults(const {
-    'maintenance_mode': false,
-    'app_version_name': '1.0.0',
-  });
-  await remoteConfig.fetchAndActivate();
+  // 3. Firebase App Check Service
+  await FirebaseAppCheckService().initAppCheck();
 
-  // 3. Crashlytics Error Handling
-  FlutterError.onError = (errorDetails) {
-    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-  };
+  // 4. Firebase Remote Config Service
+  await FirebaseRemoteConfigService().initRemoteConfig();
 
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  // 5. Firebase Messaging Push Notifications
+  await FirebaseMessagingService().initNotifications();
 
   runApp(MyApp());
 }
@@ -72,14 +49,13 @@ void main() async {
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  // Analytics instance
-  static final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  static final FirebaseAnalyticsService _analyticsService =
+      FirebaseAnalyticsService();
 
-  // GoRouter ke sath Analytics Observer connect karein taaki route navigation automatically track ho
   final GoRouter _router = GoRouter(
     initialLocation: "/",
     observers: [
-      FirebaseAnalyticsObserver(analytics: analytics),
+      _analyticsService.analyticsObserver,
     ],
     routes: [
       GoRoute(
