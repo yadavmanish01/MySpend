@@ -57,14 +57,14 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         password: state.password.trim(),
       );
 
-      final uid = credential.user?.uid;
-      if (uid != null) {
-        await _firestoreService.saveUserProfile(
-          uid: uid,
-          name: state.name.trim(),
-          email: state.email.trim(),
-        );
-      }
+      // final uid = credential.user?.uid;
+      // if (uid != null) {
+      //   await _firestoreService.saveUserProfile(
+      //     uid: uid,
+      //     name: state.name.trim(),
+      //     email: state.email.trim(),
+      //   );
+      // }
 
       emit(state.copyWith(postApiStatus: PostApiStatus.completed, message: 'Account created successfully!'));
     } catch (e) {

@@ -1,71 +1,87 @@
 import 'dart:ui';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_spend/lib/auth/login/loginView.dart';
-import 'package:my_spend/lib/auth/signup/signupView.dart';
-import 'package:my_spend/lib/home/activity/activityView.dart';
-import 'package:my_spend/lib/home/addExpenses/addExpensesView.dart';
-import 'package:my_spend/lib/home/budgets/budgetDetails/budgetDetailsView.dart';
-import 'package:my_spend/lib/home/budgets/budgetsView.dart';
-import 'package:my_spend/lib/home/dashboard/dashboardView.dart';
-import 'package:my_spend/lib/home/homeview/homeView.dart';
-import 'package:my_spend/lib/home/profile/profileView.dart';
-import 'package:my_spend/lib/home/savingGoals/savingGoadDetails/savingDetailsView.dart';
-import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
-import 'package:my_spend/lib/home/scanReceipt/scanReceipt.dart';
-import 'package:my_spend/lib/notification/notificationView.dart';
-import 'package:my_spend/routes/routesName.dart';
 import 'firebase_options.dart';
+import 'lib/auth/login/loginView.dart';
+import 'lib/auth/signup/signupView.dart';
+import 'lib/home/activity/activityView.dart';
+import 'lib/home/addExpenses/addExpensesView.dart';
+import 'lib/home/budgets/budgetDetails/budgetDetailsView.dart';
+import 'lib/home/budgets/budgetsView.dart';
+import 'lib/home/dashboard/dashboardView.dart';
+import 'lib/home/homeview/homeView.dart';
+import 'lib/home/profile/profileView.dart';
+import 'lib/home/savingGoals/savingGoadDetails/savingDetailsView.dart';
+import 'lib/home/savingGoals/savingGoalsview.dart';
+import 'lib/home/scanReceipt/scanReceipt.dart';
+import 'lib/notification/notificationView.dart';
 import 'lib/splash/splashview.dart';
+import 'routes/routesName.dart';
 
-void main()async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Flutter framework ke unhandled errors
+  // 1. Firebase App Check (Debug aur Release dono handle karega)
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode
+        ? AndroidProvider.debug
+        : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode
+        ? AppleProvider.debug
+        : AppleProvider.deviceCheck,
+  );
+
+  // Firebase Remote Config Setup
+  final remoteConfig = FirebaseRemoteConfig.instance;
+  await remoteConfig.setConfigSettings(
+    RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      // Debug me 0 rakhein taaki console changes turant mil jayein
+      minimumFetchInterval: kDebugMode ? Duration.zero : const Duration(hours: 1),
+    ),
+  );
+  // Default values jo fetch fail hone par kaam karengi
+  await remoteConfig.setDefaults(const {
+    'maintenance_mode': false,
+    'app_version_name': '1.0.0',
+  });
+  await remoteConfig.fetchAndActivate();
+
+  // 3. Crashlytics Error Handling
   FlutterError.onError = (errorDetails) {
-    FirebaseCrashlytics.instance.recordFlutterFatalError(
-      errorDetails,
-    );
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
   };
 
-  // Unhandled asynchronous errors
   PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(
-      error,
-      stack,
-      fatal: true,
-    );
-
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
+
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: _router,
-    );
-  }
+  // Analytics instance
+  static final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
-  ///GoRouter.of(context).go("/profile")
-  /// shortcut  - context.go("/")
-
-  /// passing params
-  /// GoRoute(path:"/home/:"name",builder: ((context,state)=>const HomeView(
-  /// name:state.params["name"]))
+  // GoRouter ke sath Analytics Observer connect karein taaki route navigation automatically track ho
   final GoRouter _router = GoRouter(
     initialLocation: "/",
+    observers: [
+      FirebaseAnalyticsObserver(analytics: analytics),
+    ],
     routes: [
       GoRoute(
         name: Routesname.splash,
@@ -91,11 +107,13 @@ class MyApp extends StatelessWidget {
         name: Routesname.budgets,
         path: "/budget",
         builder: ((context, state) => const Budgetsview()),
-        routes: [ GoRoute(
-          name: Routesname.budgetDetailsView,
-          path: "budgetDetails",
-          builder: ((context, state) => const Budgetdetailsview()),
-        ),]
+        routes: [
+          GoRoute(
+            name: Routesname.budgetDetailsView,
+            path: "budgetDetails",
+            builder: ((context, state) => const Budgetdetailsview()),
+          ),
+        ],
       ),
       GoRoute(
         name: Routesname.dashBoard,
@@ -111,20 +129,25 @@ class MyApp extends StatelessWidget {
         name: Routesname.activity,
         path: "/activity",
         builder: ((context, state) => const Activityview()),
-      ),GoRoute(
+      ),
+      GoRoute(
         name: Routesname.addExpenses,
         path: "/addExpenses",
         builder: ((context, state) => const Addexpensesview()),
-      ),GoRoute(
+      ),
+      GoRoute(
         name: Routesname.savingGoals,
         path: "/savingGoals",
         builder: ((context, state) => const Savinggoalsview()),
-        routes: [GoRoute(
-          name: Routesname.savingGoalDetails,
-          path: "savingGoalDetails",
-          builder: ((context, state) => const Savingdetailsview()),
-        ),]
-      ),GoRoute(
+        routes: [
+          GoRoute(
+            name: Routesname.savingGoalDetails,
+            path: "savingGoalDetails",
+            builder: ((context, state) => const Savingdetailsview()),
+          ),
+        ],
+      ),
+      GoRoute(
         name: Routesname.notification,
         path: "/notification",
         builder: ((context, state) => const Notificationview()),
@@ -136,4 +159,12 @@ class MyApp extends StatelessWidget {
       ),
     ],
   );
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      routerConfig: _router,
+    );
+  }
 }
