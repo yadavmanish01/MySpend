@@ -1,29 +1,41 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LocalStorage {
-  /// Instance of FlutterSecureStorage for secure local storage.
-  final storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
-  /// Sets a key-value pair in the local storage.
-  ///
-  /// Returns a Future<bool> indicating the success of the operation.
-  Future<bool> setValue(String key, String value) async {
-    await storage.write(key: key, value: value);
+  static const String _authTokenKey = 'auth_token';
+
+  /// Save Auth Token securely
+  Future<bool> saveAuthToken(String token) async {
+    await _storage.write(key: _authTokenKey, value: token);
     return true;
   }
 
-  /// Reads the value associated with the given key from the local storage.
-  ///
-  /// Returns a Future<dynamic> representing the value stored for the key.
-  Future<dynamic> readValue(String key) async {
-    return await storage.read(key: key);
+  /// Read Auth Token securely
+  Future<String?> readAuthToken() async {
+    return await _storage.read(key: _authTokenKey);
   }
 
-  /// Clears the value associated with the given key from the local storage.
-  ///
-  /// Returns a Future<bool> indicating the success of the operation.
+  /// Clear Auth Token
+  Future<bool> clearAuthToken() async {
+    await _storage.delete(key: _authTokenKey);
+    return true;
+  }
+
+  /// Sets a key-value pair in secure local storage.
+  Future<bool> setValue(String key, String value) async {
+    await _storage.write(key: key, value: value);
+    return true;
+  }
+
+  /// Reads value associated with key
+  Future<String?> readValue(String key) async {
+    return await _storage.read(key: key);
+  }
+
+  /// Clears key
   Future<bool> clearValue(String key) async {
-    await storage.delete(key: key);
+    await _storage.delete(key: key);
     return true;
   }
 }

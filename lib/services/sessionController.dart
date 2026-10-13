@@ -1,21 +1,13 @@
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
-
 import 'localStorage.dart';
 
 class SessionController {
-  /// Instance of [LocalStorage] for accessing local storage.
   final LocalStorage sharedPreferenceClass = LocalStorage();
-
   /// Singleton instance of [SessionController].
   static final SessionController _session = SessionController._internal();
-
-  /// Flag indicating whether the user is logged in or not.
   static bool? isLogin;
-
-
-
+  
   /// Private constructor for creating the singleton instance of [SessionController].
   SessionController._internal() {
     // Initialize default values
@@ -37,14 +29,10 @@ class SessionController {
   /// Takes a [user] object as input and saves it into the local storage.
   Future<void> saveUserInPreference(dynamic user) async {
     sharedPreferenceClass.setValue('token', jsonEncode(user));
-    // Storing value to check login
     sharedPreferenceClass.setValue('isLogin', 'true');
   }
 
-  /// Retrieves user data from the local storage.
-  ///
-  /// Retrieves user data from the local storage and assigns it to the session controller
-  /// to be used across the app.
+
   Future<void> getUserFromPreference() async {
     try {
       String userData = await sharedPreferenceClass.readValue('token');

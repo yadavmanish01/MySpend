@@ -1,8 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
+import 'package:my_spend/firebase_services/firebase_analytics_service.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/firebase_services/firestore_service.dart';
+import 'package:my_spend/services/localStorage.dart';
 
 part 'signup_event.dart';
 part 'signup_state.dart';
@@ -57,14 +59,17 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         password: state.password.trim(),
       );
 
-      // final uid = credential.user?.uid;
-      // if (uid != null) {
-      //   await _firestoreService.saveUserProfile(
-      //     uid: uid,
-      //     name: state.name.trim(),
-      //     email: state.email.trim(),
-      //   );
-      // }
+      final uid = credential.user?.uid;
+      if (uid != null) {
+        await _firestoreService.saveUserProfile(
+          uid: uid,
+          name: state.name.trim(),
+          email: state.email.trim(),
+        );
+        await LocalStorage().saveAuthToken(uid);
+      }
+
+      await FirebaseAnalyticsService().logSignUp(signUpMethod: 'email');
 
       emit(state.copyWith(postApiStatus: PostApiStatus.completed, message: 'Account created successfully!'));
     } catch (e) {

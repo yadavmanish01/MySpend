@@ -1,13 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
+import 'package:my_spend/firebase_services/firebase_analytics_service.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/lib/home/profile/logout/logout_bloc.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
+import 'package:my_spend/services/local_auth_service.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
+import 'package:my_spend/utils/services/pdf_csv_export_service.dart';
 
 import '../../../utils/extensions/sizedboxext.dart';
 
@@ -16,7 +20,6 @@ class Profileview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Wrap the stateful content with BlocProvider here
     return BlocProvider(
       create: (context) => LogoutBloc(),
       child: const _ProfileContent(),
@@ -34,13 +37,41 @@ class _ProfileContent extends StatefulWidget {
 class _ProfileContentState extends State<_ProfileContent> {
   bool _biometricEnabled = true;
 
+  Future<void> _toggleBiometrics(bool value) async {
+    if (value) {
+      final bool authenticated = await LocalAuthService().authenticate();
+      if (authenticated) {
+        setState(() => _biometricEnabled = true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Biometric Lock Enabled Successfully!"),
+              backgroundColor: AppColors.Success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Biometric Authentication Failed"),
+              backgroundColor: AppColors.Error,
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() => _biometricEnabled = false);
+    }
+  }
+
   void _showExportBottomSheet() {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Container(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -58,27 +89,80 @@ class _ProfileContentState extends State<_ProfileContent> {
                 leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
                 title: const Text("Export as PDF Statement"),
                 subtitle: const Text(
-                  "Includes category charts & total summary",
+                  "Includes category summary and transaction table",
                 ),
                 trailing: const Icon(Icons.download),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("PDF Report generated!")),
-                  );
+                onTap: () async {
+                  Navigator.pop(bottomSheetContext);
+                  final user = FirebaseAuthService().currentUser;
+                  final uid = user?.uid ?? '';
+                  final email = user?.email ?? '';
+
+                  if (uid.isNotEmpty) {
+                    final snapshot = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .collection('transactions')
+                        .get();
+
+                    final file = await PdfCsvExportService.generatePdfReport(
+                      userName: email.split('@').first,
+                      userEmail: email,
+                      transactions: snapshot.docs,
+                    );
+
+                    await FirebaseAnalyticsService().logEvent(
+                      name: 'export_report',
+                      parameters: {'format': 'pdf'},
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("PDF Saved: ${file.path}"),
+                          backgroundColor: AppColors.Success,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.table_chart, color: Colors.green),
                 title: const Text("Export as CSV Sheet"),
-                subtitle: const Text("Spreadsheet compatible data format"),
+                subtitle: const Text("Spreadsheet compatible CSV data format"),
                 trailing: const Icon(Icons.download),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("CSV Data exported!")),
-                  );
+                onTap: () async {
+                  Navigator.pop(bottomSheetContext);
+                  final user = FirebaseAuthService().currentUser;
+                  final uid = user?.uid ?? '';
+
+                  if (uid.isNotEmpty) {
+                    final snapshot = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .collection('transactions')
+                        .get();
+
+                    final file = await PdfCsvExportService.generateCsvReport(
+                      transactions: snapshot.docs,
+                    );
+
+                    await FirebaseAnalyticsService().logEvent(
+                      name: 'export_report',
+                      parameters: {'format': 'csv'},
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("CSV Saved: ${file.path}"),
+                          backgroundColor: AppColors.Success,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               10.ph,
@@ -109,7 +193,7 @@ class _ProfileContentState extends State<_ProfileContent> {
               child: const Text('Yes', style: AppTextStyles.bodyLarge),
               onPressed: () {
                 dialogContext.pop();
-                parentContext.read<LogoutBloc>().add( LogoutButtonPressed());
+                parentContext.read<LogoutBloc>().add(const LogoutButtonPressed());
               },
             ),
           ],
@@ -120,6 +204,8 @@ class _ProfileContentState extends State<_ProfileContent> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuthService().currentUser;
+
     return BlocListener<LogoutBloc, LogoutState>(
       listener: (context, state) {
         if (state.postApiStatus == PostApiStatus.loading) {
@@ -132,12 +218,9 @@ class _ProfileContentState extends State<_ProfileContent> {
             ),
           );
         } else if (state.postApiStatus == PostApiStatus.completed) {
-          // Dismiss the loading spinner dialog if open
           Navigator.of(context, rootNavigator: true).pop();
-          // Navigate to login screen using GoRouter
           context.go('/login');
         } else if (state.postApiStatus == PostApiStatus.error) {
-          // Dismiss the loading spinner dialog if open
           Navigator.of(context, rootNavigator: true).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message.isEmpty ? 'Logout failed' : state.message)),
@@ -160,13 +243,11 @@ class _ProfileContentState extends State<_ProfileContent> {
                 const CircleAvatar(radius: 50),
                 10.ph,
                 Text(
-                  FirebaseAuthService().currentUser?.displayName ??
-                      FirebaseAuthService().currentUser?.email?.split('@').first ??
-                      "User",
+                  user?.displayName ?? user?.email?.split('@').first ?? "User",
                   style: AppTextStyles.headingLarge,
                 ),
                 Text(
-                  FirebaseAuthService().currentUser?.email ?? "",
+                  user?.email ?? "",
                   style: AppTextStyles.captionBold,
                 ),
                 15.ph,
@@ -199,6 +280,7 @@ class _ProfileContentState extends State<_ProfileContent> {
                   },
                 ),
                 15.ph,
+                // Biometric App Lock Tile
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -220,13 +302,9 @@ class _ProfileContentState extends State<_ProfileContent> {
                     children: [
                       Text("Biometric Security", style: AppTextStyles.bodyLarge),
                       Switch(
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         value: _biometricEnabled,
-                        onChanged: (val) {
-                          setState(() {
-                            _biometricEnabled = val;
-                          });
-                        },
+                        onChanged: _toggleBiometrics,
                       ),
                     ],
                   ),
