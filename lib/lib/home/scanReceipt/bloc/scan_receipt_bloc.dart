@@ -7,11 +7,13 @@ import 'package:my_spend/firebase_services/firebase_storage_service.dart';
 import 'package:my_spend/firebase_services/firestore_service.dart';
 import 'package:my_spend/lib/home/scanReceipt/bloc/scan_receipt_event.dart';
 import 'package:my_spend/lib/home/scanReceipt/bloc/scan_receipt_state.dart';
+import 'package:my_spend/services/receipt_scanner_service.dart';
 
 class ScanReceiptBloc extends Bloc<ScanReceiptEvent, ScanReceiptState> {
   final FirebaseAuthService _authService = FirebaseAuthService();
   final FirebaseStorageService _storageService = FirebaseStorageService();
   final FirestoreService _firestoreService = FirestoreService();
+  final ReceiptScannerService _scannerService = ReceiptScannerService();
 
   ScanReceiptBloc() : super(const ScanReceiptState()) {
     on<ProcessReceiptImageEvent>(_onProcessReceiptImage);
@@ -32,25 +34,39 @@ class ScanReceiptBloc extends Bloc<ScanReceiptEvent, ScanReceiptState> {
     ));
 
     try {
+      // 1. Scan image with AI / OCR service
+      final scannedData = await _scannerService.scanReceipt(imageFile);
+
       final uid = _authService.currentUser?.uid;
       if (uid != null) {
-        final receiptUrl = await _storageService.uploadReceiptImage(
-          uid: uid,
-          imageFile: imageFile,
-        );
+        // 2. Upload image to Firebase Storage if available
+        String? receiptUrl;
+        try {
+          receiptUrl = await _storageService.uploadReceiptImage(
+            uid: uid,
+            imageFile: imageFile,
+          );
+        } catch (_) {
+          // If storage fail, proceed gracefully with transaction creation
+        }
 
+        // 3. Save extracted details directly to Firestore
         await _firestoreService.addTransaction(
           uid: uid,
-          title: state.merchantName,
-          amount: state.totalAmount,
-          category: state.category,
+          title: scannedData.merchant,
+          amount: scannedData.amount,
+          category: scannedData.category,
           isExpense: true,
           receiptUrl: receiptUrl,
         );
 
         emit(state.copyWith(
+          merchantName: scannedData.merchant,
+          totalAmount: scannedData.amount,
+          category: scannedData.category,
+          date: scannedData.date,
           postApiStatus: PostApiStatus.completed,
-          message: 'Receipt uploaded & saved to transactions!',
+          message: 'Receipt scanned & saved successfully!',
         ));
       }
     } catch (e) {
