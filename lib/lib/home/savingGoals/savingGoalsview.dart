@@ -1,33 +1,46 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:my_spend/firebase_services/firebase_auth_service.dart';
-import 'package:my_spend/firebase_services/firestore_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_spend/data/response/postApiStatus.dart';
+import 'package:my_spend/data/response/status.dart';
+import 'package:my_spend/lib/home/savingGoals/bloc/saving_goals_bloc.dart';
+import 'package:my_spend/lib/home/savingGoals/bloc/saving_goals_event.dart';
+import 'package:my_spend/lib/home/savingGoals/bloc/saving_goals_state.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoadDetails/savingDetailsView.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
+import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/customFormField.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
 
-import '../../../utils/colorStyle/colorStyle.dart';
 import '../../../utils/extensions/sizedboxext.dart';
 
-class Savinggoalsview extends StatefulWidget {
+class Savinggoalsview extends StatelessWidget {
   const Savinggoalsview({super.key});
 
   @override
-  State<Savinggoalsview> createState() => _SavinggoalsviewState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) =>
+          SavingGoalsBloc()..add(const FetchSavingGoalsEvent()),
+      child: const _SavingGoalsContent(),
+    );
+  }
 }
 
-class _SavinggoalsviewState extends State<Savinggoalsview> {
-  final FirebaseAuthService _authService = FirebaseAuthService();
-  final FirestoreService _firestoreService = FirestoreService();
+class _SavingGoalsContent extends StatefulWidget {
+  const _SavingGoalsContent();
 
-  void _showCreateGoalDialog(BuildContext context, String uid) {
+  @override
+  State<_SavingGoalsContent> createState() => _SavingGoalsContentState();
+}
+
+class _SavingGoalsContentState extends State<_SavingGoalsContent> {
+  void _showCreateGoalDialog(BuildContext parentContext) {
     final titleController = TextEditingController();
     final targetController = TextEditingController();
 
     showDialog(
-      context: context,
-      builder: (context) {
+      context: parentContext,
+      builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text("Create Saving Goal", style: AppTextStyles.headingLarge),
@@ -48,30 +61,23 @@ class _SavinggoalsviewState extends State<Savinggoalsview> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: () async {
+              onPressed: () {
                 final title = titleController.text.trim();
                 final target = double.tryParse(targetController.text.trim()) ?? 0.0;
 
                 if (title.isNotEmpty && target > 0) {
-                  await _firestoreService.addSavingGoal(
-                    uid: uid,
-                    title: title,
-                    targetAmount: target,
-                  );
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Saving Goal Created!"),
-                        backgroundColor: AppColors.Success,
-                      ),
-                    );
-                  }
+                  Navigator.pop(dialogContext);
+                  parentContext.read<SavingGoalsBloc>().add(
+                        CreateSavingGoalEvent(
+                          title: title,
+                          targetAmount: target,
+                        ),
+                      );
                 }
               },
               child: const Text("Create", style: TextStyle(color: Colors.white)),
@@ -84,133 +90,154 @@ class _SavinggoalsviewState extends State<Savinggoalsview> {
 
   @override
   Widget build(BuildContext context) {
-    final uid = _authService.currentUser?.uid ?? '';
-
     return SafeArea(
       child: Scaffold(
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              10.ph,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Savings Goals", style: AppTextStyles.headingLarge),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              20.ph,
-              StreamBuilder<QuerySnapshot>(
-                stream: uid.isNotEmpty
-                    ? _firestoreService.streamSavingGoals(uid)
-                    : const Stream.empty(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+        body: BlocListener<SavingGoalsBloc, SavingGoalsState>(
+          listenWhen: (previous, current) =>
+              previous.postApiStatus != current.postApiStatus,
+          listener: (context, state) {
+            if (state.postApiStatus == PostApiStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.Error,
+                ),
+              );
+            } else if (state.postApiStatus == PostApiStatus.completed) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Saving Goal Created!"),
+                  backgroundColor: AppColors.Success,
+                ),
+              );
+            }
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                10.ph,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Savings Goals", style: AppTextStyles.headingLarge),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                20.ph,
+                BlocBuilder<SavingGoalsBloc, SavingGoalsState>(
+                  builder: (context, state) {
+                    if (state.status == Status.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.all(30),
-                      alignment: Alignment.center,
-                      child: Text(
-                        "No savings goals set yet.\nTap 'Create New Goal' below to start!",
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.bodyMuted,
-                      ),
-                    );
-                  }
-
-                  final docs = snapshot.data!.docs;
-
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: docs.length,
-                    separatorBuilder: (context, index) => 15.ph,
-                    itemBuilder: (context, index) {
-                      final item = docs[index].data() as Map<String, dynamic>;
-                      final title = item['title'] ?? 'Goal';
-                      final targetAmount = (item['targetAmount'] as num?)?.toDouble() ?? 1.0;
-                      final currentAmount = (item['currentAmount'] as num?)?.toDouble() ?? 0.0;
-                      final progress = (currentAmount / targetAmount).clamp(0.0, 1.0);
-                      final percentage = (progress * 100).toStringAsFixed(0);
-
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Savingdetailsview(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(title, style: AppTextStyles.headingMedium),
-                              8.ph,
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "₹${currentAmount.toStringAsFixed(0)} / ₹${targetAmount.toStringAsFixed(0)}",
-                                    style: AppTextStyles.captionBold,
-                                  ),
-                                  Text(
-                                    "$percentage%",
-                                    style: AppTextStyles.captionBold.copyWith(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              10.ph,
-                              LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 8,
-                                backgroundColor: AppColors.textMuted.withValues(alpha: 0.2),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  AppColors.primary,
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ],
-                          ),
+                    if (state.goals.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(30),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "No savings goals set yet.\nTap 'Create New Goal' below to start!",
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.bodyMuted,
                         ),
                       );
-                    },
-                  );
-                },
-              ),
-              40.ph,
-              CustomButton(
-                title: "Create New Goal",
-                onPressed: () => _showCreateGoalDialog(context, uid),
-              ),
-              30.ph,
-            ],
+                    }
+
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: state.goals.length,
+                      separatorBuilder: (context, index) => 15.ph,
+                      itemBuilder: (context, index) {
+                        final item =
+                            state.goals[index].data() as Map<String, dynamic>;
+                        final title = item['title'] ?? 'Goal';
+                        final targetAmount =
+                            (item['targetAmount'] as num?)?.toDouble() ?? 1.0;
+                        final currentAmount =
+                            (item['currentAmount'] as num?)?.toDouble() ?? 0.0;
+                        final progress =
+                            (currentAmount / targetAmount).clamp(0.0, 1.0);
+                        final percentage = (progress * 100).toStringAsFixed(0);
+
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Savingdetailsview(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(title, style: AppTextStyles.headingMedium),
+                                8.ph,
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "₹${currentAmount.toStringAsFixed(0)} / ₹${targetAmount.toStringAsFixed(0)}",
+                                      style: AppTextStyles.captionBold,
+                                    ),
+                                    Text(
+                                      "$percentage%",
+                                      style: AppTextStyles.captionBold.copyWith(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                10.ph,
+                                LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 8,
+                                  backgroundColor: AppColors.textMuted
+                                      .withValues(alpha: 0.2),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                    AppColors.primary,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                40.ph,
+                CustomButton(
+                  title: "Create New Goal",
+                  onPressed: () => _showCreateGoalDialog(context),
+                ),
+                30.ph,
+              ],
+            ),
           ),
         ),
       ),

@@ -6,7 +6,6 @@ class FirestoreService {
   // Collection References
   CollectionReference get _usersRef => _firestore.collection('users');
 
-  // ==================== USER PROFILE ====================
 
   /// Save or Update User Profile in Firestore
   Future<void> saveUserProfile({
@@ -93,7 +92,7 @@ class FirestoreService {
         .update(data);
   }
 
-  // ==================== BUDGETS ====================
+  // ==================== BUDGETS =========
 
   /// Set or Update a Monthly Category Budget
   Future<void> setBudget({

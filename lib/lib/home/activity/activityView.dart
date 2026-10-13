@@ -1,27 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:my_spend/firebase_services/firebase_auth_service.dart';
-import 'package:my_spend/firebase_services/firestore_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_spend/data/response/status.dart';
+import 'package:my_spend/lib/home/activity/bloc/activity_bloc.dart';
+import 'package:my_spend/lib/home/activity/bloc/activity_event.dart';
+import 'package:my_spend/lib/home/activity/bloc/activity_state.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/widgets/customFormField.dart';
 
 import '../../../utils/colorStyle/colorStyle.dart';
 import '../../../utils/extensions/sizedboxext.dart';
 
-class Activityview extends StatefulWidget {
+class Activityview extends StatelessWidget {
   const Activityview({super.key});
 
   @override
-  State<Activityview> createState() => _ActivityviewState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ActivityBloc()..add(const FetchActivityEvent()),
+      child: const _ActivityContent(),
+    );
+  }
 }
 
-class _ActivityviewState extends State<Activityview> {
-  int _selectedFilterIndex = 0;
-  final List<String> _filters = ["All", "Expenses", "Income"];
+class _ActivityContent extends StatefulWidget {
+  const _ActivityContent();
+
+  @override
+  State<_ActivityContent> createState() => _ActivityContentState();
+}
+
+class _ActivityContentState extends State<_ActivityContent> {
+  final List<String> _filters = const ["All", "Expenses", "Income"];
   final TextEditingController _searchController = TextEditingController();
-  final FirebaseAuthService _authService = FirebaseAuthService();
-  final FirestoreService _firestoreService = FirestoreService();
-  String _searchQuery = "";
 
   @override
   void dispose() {
@@ -84,8 +94,6 @@ class _ActivityviewState extends State<Activityview> {
 
   @override
   Widget build(BuildContext context) {
-    final uid = _authService.currentUser?.uid ?? '';
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -99,7 +107,8 @@ class _ActivityviewState extends State<Activityview> {
                 children: [
                   Text("Transactions", style: AppTextStyles.headingLarge),
                   IconButton(
-                    icon: const Icon(Icons.file_download_outlined, color: AppColors.primary),
+                    icon: const Icon(Icons.file_download_outlined,
+                        color: AppColors.primary),
                     onPressed: () => _showExportBottomSheet(context),
                   ),
                 ],
@@ -110,52 +119,63 @@ class _ActivityviewState extends State<Activityview> {
                 prefixIcon: const Icon(Icons.search),
                 hint: "Search transactions",
                 onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.toLowerCase().trim();
-                  });
+                  context
+                      .read<ActivityBloc>()
+                      .add(SearchQueryChangedEvent(val));
                 },
               ),
               20.ph,
-              Row(
-                children: List.generate(_filters.length, (index) {
-                  final isSelected = _selectedFilterIndex == index;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFilterIndex = index),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF5D5FEF).withValues(alpha: 0.12)
-                            : (index == 1 ? const Color(0xFFFFEAEA) : const Color(0xFFE8F8F0)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _filters[index],
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected
-                              ? const Color(0xFF5D5FEF)
-                              : (index == 1 ? const Color(0xFFFF5252) : const Color(0xFF27AE60)),
+              BlocBuilder<ActivityBloc, ActivityState>(
+                buildWhen: (previous, current) =>
+                    previous.selectedFilterIndex != current.selectedFilterIndex,
+                builder: (context, state) {
+                  return Row(
+                    children: List.generate(_filters.length, (index) {
+                      final isSelected = state.selectedFilterIndex == index;
+                      return GestureDetector(
+                        onTap: () {
+                          context
+                              .read<ActivityBloc>()
+                              .add(FilterChangedEvent(index));
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF5D5FEF).withValues(alpha: 0.12)
+                                : (index == 1
+                                    ? const Color(0xFFFFEAEA)
+                                    : const Color(0xFFE8F8F0)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _filters[index],
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? const Color(0xFF5D5FEF)
+                                  : (index == 1
+                                      ? const Color(0xFFFF5252)
+                                      : const Color(0xFF27AE60)),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   );
-                }),
+                },
               ),
               20.ph,
-              // Realtime Stream from Firestore
-              StreamBuilder<QuerySnapshot>(
-                stream: uid.isNotEmpty
-                    ? _firestoreService.streamTransactions(uid)
-                    : const Stream.empty(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              BlocBuilder<ActivityBloc, ActivityState>(
+                builder: (context, state) {
+                  if (state.status == Status.loading) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  if (state.transactions.isEmpty) {
                     return Container(
                       padding: const EdgeInsets.all(30),
                       alignment: Alignment.center,
@@ -166,19 +186,24 @@ class _ActivityviewState extends State<Activityview> {
                     );
                   }
 
-                  var filteredDocs = snapshot.data!.docs.where((doc) {
+                  final query = state.searchQuery.toLowerCase().trim();
+                  final filteredDocs = state.transactions.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final isExpense = data['isExpense'] as bool? ?? true;
-                    final title = (data['title'] as String? ?? '').toLowerCase();
-                    final category = (data['category'] as String? ?? '').toLowerCase();
+                    final title =
+                        (data['title'] as String? ?? '').toLowerCase();
+                    final category =
+                        (data['category'] as String? ?? '').toLowerCase();
 
-                    // Filter by Expense/Income tab
-                    if (_selectedFilterIndex == 1 && !isExpense) return false;
-                    if (_selectedFilterIndex == 2 && isExpense) return false;
+                    if (state.selectedFilterIndex == 1 && !isExpense) {
+                      return false;
+                    }
+                    if (state.selectedFilterIndex == 2 && isExpense) {
+                      return false;
+                    }
 
-                    // Filter by Search Query
-                    if (_searchQuery.isNotEmpty) {
-                      return title.contains(_searchQuery) || category.contains(_searchQuery);
+                    if (query.isNotEmpty) {
+                      return title.contains(query) || category.contains(query);
                     }
 
                     return true;
@@ -201,12 +226,15 @@ class _ActivityviewState extends State<Activityview> {
                     itemCount: filteredDocs.length,
                     separatorBuilder: (context, index) => 12.ph,
                     itemBuilder: (context, index) {
-                      final item = filteredDocs[index].data() as Map<String, dynamic>;
+                      final item =
+                          filteredDocs[index].data() as Map<String, dynamic>;
                       final title = item['title'] ?? 'Transaction';
                       final category = item['category'] ?? 'General';
-                      final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
+                      final amount =
+                          (item['amount'] as num?)?.toDouble() ?? 0.0;
                       final isExpense = item['isExpense'] as bool? ?? true;
-                      final letter = title.isNotEmpty ? title[0].toUpperCase() : 'T';
+                      final letter =
+                          title.isNotEmpty ? title[0].toUpperCase() : 'T';
 
                       return Container(
                         padding: const EdgeInsets.all(14),
@@ -245,7 +273,8 @@ class _ActivityviewState extends State<Activityview> {
                                 children: [
                                   Text(title, style: AppTextStyles.headingLarge),
                                   4.ph,
-                                  Text(category, style: AppTextStyles.captionBold),
+                                  Text(category,
+                                      style: AppTextStyles.captionBold),
                                 ],
                               ),
                             ),
@@ -254,7 +283,9 @@ class _ActivityviewState extends State<Activityview> {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: isExpense ? const Color(0xFFE53935) : const Color(0xFF27AE60),
+                                color: isExpense
+                                    ? const Color(0xFFE53935)
+                                    : const Color(0xFF27AE60),
                               ),
                             ),
                           ],
