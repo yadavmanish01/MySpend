@@ -6,6 +6,7 @@ import 'package:my_spend/data/response/postApiStatus.dart';
 import 'package:my_spend/firebase_services/firebase_analytics_service.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/lib/home/profile/logout/logout_bloc.dart';
+import 'package:my_spend/lib/home/profile/personal_info/personal_info_view.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
 import 'package:my_spend/services/local_auth_service.dart';
@@ -193,7 +194,7 @@ class _ProfileContentState extends State<_ProfileContent> {
               child: const Text('Yes', style: AppTextStyles.bodyLarge),
               onPressed: () {
                 dialogContext.pop();
-                parentContext.read<LogoutBloc>().add(const LogoutButtonPressed());
+                parentContext.read<LogoutBloc>().add( LogoutButtonPressed());
               },
             ),
           ],
@@ -253,7 +254,14 @@ class _ProfileContentState extends State<_ProfileContent> {
                 15.ph,
                 _buildMenuTile(
                   title: "Personal information",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PersonalInfoView(),
+                      ),
+                    );
+                  },
                 ),
                 15.ph,
                 _buildMenuTile(

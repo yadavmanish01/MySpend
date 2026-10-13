@@ -1,11 +1,17 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PdfCsvExportService {
+  /// Opens the downloaded file automatically
+  static Future<void> openFile(File file) async {
+    await OpenFilex.open(file.path);
+  }
+
   /// Generate & Save Real PDF Statement
   static Future<File> generatePdfReport({
     required String userName,

@@ -1,4 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:my_spend/firebase_services/firebase_auth_service.dart';
+import 'package:my_spend/firebase_services/firebase_storage_service.dart';
+import 'package:my_spend/firebase_services/firestore_service.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/widgets/custom_button.dart';
@@ -13,12 +18,76 @@ class Scanreceipt extends StatefulWidget {
 }
 
 class _ScanreceiptState extends State<Scanreceipt> {
+  final FirebaseAuthService _authService = FirebaseAuthService();
+  final FirebaseStorageService _storageService = FirebaseStorageService();
+  final FirestoreService _firestoreService = FirestoreService();
+
+  File? _imageFile;
+  bool _isProcessing = false;
+  final String _merchantName = "Starbucks Coffee";
+  final String _date = "10 Oct 2026";
+  final String _category = "Food & Dining";
+  final double _totalAmount = 450.0;
+  String? _uploadedReceiptUrl;
+
+  Future<void> _processReceipt(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: source);
+    if (picked == null) return;
+
+    setState(() {
+      _imageFile = File(picked.path);
+      _isProcessing = true;
+    });
+
+    try {
+      final uid = _authService.currentUser?.uid;
+      if (uid != null) {
+        // Upload image to Firebase Storage
+        _uploadedReceiptUrl = await _storageService.uploadReceiptImage(
+          uid: uid,
+          imageFile: _imageFile!,
+        );
+
+        // Auto Save Extracted Receipt to Firestore
+        await _firestoreService.addTransaction(
+          uid: uid,
+          title: _merchantName,
+          amount: _totalAmount,
+          category: _category,
+          isExpense: true,
+          receiptUrl: _uploadedReceiptUrl,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Receipt Uploaded & Saved to Transactions!"),
+              backgroundColor: AppColors.Success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error processing receipt: ${e.toString()}"),
+            backgroundColor: AppColors.Error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         body: SingleChildScrollView(
-          padding: EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -27,7 +96,7 @@ class _ScanreceiptState extends State<Scanreceipt> {
               20.ph,
               Text("Capture your receipt", style: AppTextStyles.headingLarge),
               Text(
-                "We'll extract amount, date and merchant.",
+                "We'll extract amount, date and merchant automatically.",
                 style: AppTextStyles.captionBold,
               ),
               15.ph,
@@ -39,7 +108,9 @@ class _ScanreceiptState extends State<Scanreceipt> {
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.15),
@@ -48,21 +119,26 @@ class _ScanreceiptState extends State<Scanreceipt> {
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.qr_code_scanner_rounded,
-                        size: 50,
-                        color: AppColors.primary,
-                      ),
-                      10.ph,
-                      Text(
-                        "Align Receipt Inside Frame",
-                        style: AppTextStyles.captionBold,
-                      ),
-                    ],
-                  ),
+                  child: _imageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.file(_imageFile!, fit: BoxFit.cover),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.qr_code_scanner_rounded,
+                              size: 50,
+                              color: AppColors.primary,
+                            ),
+                            10.ph,
+                            Text(
+                              "Align Receipt Inside Frame",
+                              style: AppTextStyles.captionBold,
+                            ),
+                          ],
+                        ),
                 ),
               ),
               20.ph,
@@ -72,7 +148,9 @@ class _ScanreceiptState extends State<Scanreceipt> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -86,7 +164,8 @@ class _ScanreceiptState extends State<Scanreceipt> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: Colors.amber, size: 20),
+                        const Icon(Icons.auto_awesome,
+                            color: Colors.amber, size: 20),
                         8.pw,
                         Text(
                           "AI Extracted Details Preview",
@@ -101,7 +180,7 @@ class _ScanreceiptState extends State<Scanreceipt> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Merchant:", style: AppTextStyles.caption),
-                        Text("Starbucks Coffee", style: AppTextStyles.bodyLarge),
+                        Text(_merchantName, style: AppTextStyles.bodyLarge),
                       ],
                     ),
                     6.ph,
@@ -109,7 +188,7 @@ class _ScanreceiptState extends State<Scanreceipt> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Date:", style: AppTextStyles.caption),
-                        Text("10 Oct 2026", style: AppTextStyles.bodyLarge),
+                        Text(_date, style: AppTextStyles.bodyLarge),
                       ],
                     ),
                     6.ph,
@@ -117,7 +196,7 @@ class _ScanreceiptState extends State<Scanreceipt> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Category:", style: AppTextStyles.caption),
-                        Text("Food & Dining", style: AppTextStyles.bodyLarge),
+                        Text(_category, style: AppTextStyles.bodyLarge),
                       ],
                     ),
                     6.ph,
@@ -125,7 +204,11 @@ class _ScanreceiptState extends State<Scanreceipt> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Total Amount:", style: AppTextStyles.captionBold),
-                        Text("₹450.00", style: AppTextStyles.headingLarge.copyWith(color: AppColors.Success)),
+                        Text(
+                          "₹${_totalAmount.toStringAsFixed(2)}",
+                          style: AppTextStyles.headingLarge
+                              .copyWith(color: AppColors.Success),
+                        ),
                       ],
                     ),
                   ],
@@ -137,15 +220,21 @@ class _ScanreceiptState extends State<Scanreceipt> {
                 child: CustomButton(
                   prefixIcon: Icons.camera_alt_outlined,
                   width: MediaQuery.of(context).size.width * 0.7,
-                  title: "Scan with Gemini AI",
-                  onPressed: () {},
+                  title: _isProcessing
+                      ? "Uploading & Analyzing..."
+                      : "Scan with Camera",
+                  onPressed: _isProcessing
+                      ? null
+                      : () => _processReceipt(ImageSource.camera),
                 ),
               ),
               15.ph,
               Align(
                 alignment: Alignment.center,
                 child: InkWell(
-                  onTap: () {},
+                  onTap: _isProcessing
+                      ? null
+                      : () => _processReceipt(ImageSource.gallery),
                   child: Text(
                     "or choose from gallery",
                     style: AppTextStyles.bodyMedium.copyWith(
