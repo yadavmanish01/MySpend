@@ -188,7 +188,22 @@ class _ActivityContentState extends State<_ActivityContent> {
                             BarChartData(
                               alignment: BarChartAlignment.spaceAround,
                               maxY: chartMaxY,
-                              barTouchData: const BarTouchData(enabled: true),
+                              barTouchData: BarTouchData(
+                                enabled: true,
+                                touchTooltipData: BarTouchTooltipData(
+                                  getTooltipColor: (group) => AppColors.primary,
+                                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                    return BarTooltipItem(
+                                      '₹${rod.toY.toStringAsFixed(0)}',
+                                      const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                               titlesData: FlTitlesData(
                                 show: true,
                                 bottomTitles: AxisTitles(
