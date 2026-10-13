@@ -5,6 +5,7 @@ import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/lib/auth/login/login_events.dart';
 import 'package:my_spend/lib/auth/login/login_states.dart';
 import 'package:my_spend/services/localStorage.dart';
+import 'package:my_spend/services/sessionController.dart';
 
 class LoginBloc extends Bloc<LoginEvents, LoginState> {
   final FirebaseAuthService _authService = FirebaseAuthService();
@@ -68,8 +69,13 @@ class LoginBloc extends Bloc<LoginEvents, LoginState> {
       );
 
       final uid = credential.user?.uid;
+      final email = credential.user?.email;
       if (uid != null) {
         await LocalStorage().saveAuthToken(uid);
+        await SessionController().saveUserInPreference({
+          'uid': uid,
+          'email': email ?? '',
+        });
       }
 
       await FirebaseAnalyticsService().logLogin(loginMethod: 'email');

@@ -1,49 +1,67 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'localStorage.dart';
 
 class SessionController {
-  final LocalStorage sharedPreferenceClass = LocalStorage();
-  /// Singleton instance of [SessionController].
+  final LocalStorage _localStorage = LocalStorage();
+
   static final SessionController _session = SessionController._internal();
   static bool? isLogin;
-  
-  /// Private constructor for creating the singleton instance of [SessionController].
+  static String? userId;
+  static Map<String, dynamic>? userDetails;
+
   SessionController._internal() {
-    // Initialize default values
     isLogin = false;
   }
 
-  //In Dart, a factory constructor is a special kind of constructor that can return an instance of the class,
-  // potentially a cached or pre-existing instance, instead of always creating a new one.
-  // It's defined using the factory keyword.
-  // This is useful for implementing patterns like singletons or when you want to control instance creat
-  //
-  /// Factory constructor for accessing the singleton instance of [SessionController].
   factory SessionController() {
     return _session;
   }
 
-  /// Saves user data into the local storage.
-  ///
-  /// Takes a [user] object as input and saves it into the local storage.
-  Future<void> saveUserInPreference(dynamic user) async {
-    sharedPreferenceClass.setValue('token', jsonEncode(user));
-    sharedPreferenceClass.setValue('isLogin', 'true');
+  /// Saves user session in secure local storage
+  Future<void> saveUserInPreference(Map<String, dynamic> user) async {
+    final token = user['uid'] ?? user['id'] ?? '';
+    await _localStorage.saveAuthToken(token.toString());
+    await _localStorage.setValue('user_details', jsonEncode(user));
+    await _localStorage.setValue('isLogin', 'true');
+    isLogin = true;
+    userId = token.toString();
+    userDetails = user;
   }
 
-
+  /// Retrieves user data from local storage
   Future<void> getUserFromPreference() async {
     try {
-      String userData = await sharedPreferenceClass.readValue('token');
-      var isLogin = await sharedPreferenceClass.readValue('isLogin');
+      final token = await _localStorage.readAuthToken();
+      final loginStatus = await _localStorage.readValue('isLogin');
+      final userJson = await _localStorage.readValue('user_details');
 
-      if (userData.isNotEmpty) {
-       // SessionController.user = UserModel.fromJson(jsonDecode(userData));
+      if (token != null && token.isNotEmpty && loginStatus == 'true') {
+        isLogin = true;
+        userId = token;
+        if (userJson != null && userJson.isNotEmpty) {
+          userDetails = jsonDecode(userJson) as Map<String, dynamic>;
+        }
+      } else {
+        isLogin = false;
+        userId = null;
+        userDetails = null;
       }
-      SessionController.isLogin = isLogin == 'true' ? true : false;
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("Error reading session: $e");
+      isLogin = false;
+      userId = null;
+      userDetails = null;
     }
+  }
+
+  /// Clears user session on logout
+  Future<void> clearSession() async {
+    await _localStorage.clearAuthToken();
+    await _localStorage.clearValue('user_details');
+    await _localStorage.clearValue('isLogin');
+    isLogin = false;
+    userId = null;
+    userDetails = null;
   }
 }

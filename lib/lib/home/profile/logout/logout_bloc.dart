@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/services/localStorage.dart';
+import 'package:my_spend/services/sessionController.dart';
 
 part 'logout_event.dart';
 part 'logout_state.dart';
@@ -23,6 +24,7 @@ class LogoutBloc extends Bloc<LogoutEvent, LogoutState> {
     try {
       await _authService.signOut();
       await LocalStorage().clearAuthToken();
+      await SessionController().clearSession();
 
       emit(state.copyWith(
         postApiStatus: PostApiStatus.completed,
