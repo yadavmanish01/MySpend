@@ -72,11 +72,12 @@ dependencies:
   local_auth: ^2.3.0
   flutter_local_notifications: ^19.1.0
 
-  # PDF & CSV Export & File Opening
+  # PDF & CSV Export & File Opening / Sharing
   pdf: ^3.11.3
   csv: ^6.0.0
   path_provider: ^2.1.5
   open_filex: ^4.5.0
+  share_plus: ^13.3.1
   firebase_remote_config: ^5.5.0
 
 

@@ -5,11 +5,24 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
 
 class PdfCsvExportService {
-  /// Opens the downloaded file automatically
-  static Future<void> openFile(File file) async {
+  /// Helper to get public Download directory or fallback directory
+  static Future<Directory> _getExportDirectory() async {
+    if (Platform.isAndroid) {
+      final downloadDir = Directory('/storage/emulated/0/Download');
+      if (await downloadDir.exists()) {
+        return downloadDir;
+      }
+    }
+    return await getApplicationDocumentsDirectory();
+  }
+
+  /// Opens and/or shares the exported file
+  static Future<void> openAndShareFile(File file, String title) async {
     await OpenFilex.open(file.path);
+    await Share.shareXFiles([XFile(file.path)], text: title);
   }
 
   /// Generate & Save Real PDF Statement
@@ -44,7 +57,7 @@ class PdfCsvExportService {
               headers: ['Title', 'Category', 'Type', 'Amount (₹)'],
               data: transactions.map((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                final title = data['title'] ?? 'N/A';
+                final title = data['title'] ?? 'N me';
                 final category = data['category'] ?? 'General';
                 final isExpense = data['isExpense'] as bool? ?? true;
                 final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
@@ -61,8 +74,8 @@ class PdfCsvExportService {
       ),
     );
 
-    final outputDir = await getApplicationDocumentsDirectory();
-    final file = File("${outputDir.path}/MySpend_Report_${DateTime.now().millisecondsSinceEpoch}.pdf");
+    final dir = await _getExportDirectory();
+    final file = File("${dir.path}/MySpend_Report_${DateTime.now().millisecondsSinceEpoch}.pdf");
     await file.writeAsBytes(await pdf.save());
     return file;
   }
@@ -86,8 +99,8 @@ class PdfCsvExportService {
     }
 
     String csvData = const ListToCsvConverter().convert(rows);
-    final outputDir = await getApplicationDocumentsDirectory();
-    final file = File("${outputDir.path}/MySpend_Export_${DateTime.now().millisecondsSinceEpoch}.csv");
+    final dir = await _getExportDirectory();
+    final file = File("${dir.path}/MySpend_Export_${DateTime.now().millisecondsSinceEpoch}.csv");
     await file.writeAsString(csvData);
     return file;
   }

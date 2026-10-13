@@ -6,7 +6,9 @@ import 'package:my_spend/data/response/status.dart';
 import 'package:my_spend/lib/home/activity/bloc/activity_bloc.dart';
 import 'package:my_spend/lib/home/activity/bloc/activity_event.dart';
 import 'package:my_spend/lib/home/activity/bloc/activity_state.dart';
+import 'package:my_spend/firebase_services/firebase_auth_service.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
+import 'package:my_spend/utils/services/pdf_csv_export_service.dart';
 import 'package:my_spend/utils/widgets/customFormField.dart';
 
 import '../../../utils/colorStyle/colorStyle.dart';
@@ -66,11 +68,28 @@ class _ActivityContentState extends State<_ActivityContent> {
                 title: const Text("Export as PDF Statement"),
                 subtitle: const Text("Includes category charts & total summary"),
                 trailing: const Icon(Icons.download),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("PDF Report generated!")),
-                  );
+                  final user = FirebaseAuthService().currentUser;
+                  final uid = user?.uid ?? '';
+                  final email = user?.email ?? '';
+
+                  if (uid.isNotEmpty) {
+                    final snapshot = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .collection('transactions')
+                        .get();
+
+                    final file = await PdfCsvExportService.generatePdfReport(
+                      userName: email.split('@').first,
+                      userEmail: email,
+                      transactions: snapshot.docs,
+                    );
+
+                    await PdfCsvExportService.openAndShareFile(
+                        file, "MySpend PDF Report");
+                  }
                 },
               ),
               const Divider(),
@@ -79,11 +98,25 @@ class _ActivityContentState extends State<_ActivityContent> {
                 title: const Text("Export as CSV Sheet"),
                 subtitle: const Text("Spreadsheet compatible data format"),
                 trailing: const Icon(Icons.download),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("CSV Data exported!")),
-                  );
+                  final user = FirebaseAuthService().currentUser;
+                  final uid = user?.uid ?? '';
+
+                  if (uid.isNotEmpty) {
+                    final snapshot = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .collection('transactions')
+                        .get();
+
+                    final file = await PdfCsvExportService.generateCsvReport(
+                      transactions: snapshot.docs,
+                    );
+
+                    await PdfCsvExportService.openAndShareFile(
+                        file, "MySpend CSV Export");
+                  }
                 },
               ),
               10.ph,

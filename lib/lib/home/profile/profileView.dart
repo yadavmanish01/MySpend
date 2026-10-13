@@ -117,14 +117,8 @@ class _ProfileContentState extends State<_ProfileContent> {
                       parameters: {'format': 'pdf'},
                     );
 
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("PDF Saved: ${file.path}"),
-                          backgroundColor: AppColors.Success,
-                        ),
-                      );
-                    }
+                    await PdfCsvExportService.openAndShareFile(
+                        file, "MySpend PDF Report");
                   }
                 },
               ),
@@ -155,14 +149,8 @@ class _ProfileContentState extends State<_ProfileContent> {
                       parameters: {'format': 'csv'},
                     );
 
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("CSV Saved: ${file.path}"),
-                          backgroundColor: AppColors.Success,
-                        ),
-                      );
-                    }
+                    await PdfCsvExportService.openAndShareFile(
+                        file, "MySpend CSV Export");
                   }
                 },
               ),
