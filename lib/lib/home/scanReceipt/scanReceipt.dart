@@ -200,13 +200,13 @@ class _ScanReceiptContent extends StatelessWidget {
                         width: MediaQuery.of(context).size.width * 0.7,
                         title: isLoading
                             ? "Uploading & Analyzing..."
-                            : "Scan with Camera",
+                            : "Scan from gallery",
                         onPressed: isLoading
                             ? null
                             : () {
                                 context.read<ScanReceiptBloc>().add(
                                       const ProcessReceiptImageEvent(
-                                          ImageSource.camera),
+                                          ImageSource.gallery),
                                     );
                               },
                       ),
