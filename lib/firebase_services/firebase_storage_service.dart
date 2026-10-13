@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseStorageService {
@@ -14,7 +15,12 @@ class FirebaseStorageService {
       final uploadTask = await ref.putFile(imageFile);
       return await uploadTask.ref.getDownloadURL();
     } on FirebaseException catch (e) {
+      if (e.code == 'object-not-found' || e.code == 'bucket-not-found') {
+        throw 'Firebase Storage bucket was not found. Please verify Firebase Storage is enabled in the Firebase Console.';
+      }
       throw e.message ?? 'Failed to upload profile picture';
+    } catch (e) {
+      throw 'Upload failed: $e';
     }
   }
 
@@ -29,7 +35,12 @@ class FirebaseStorageService {
       final uploadTask = await ref.putFile(imageFile);
       return await uploadTask.ref.getDownloadURL();
     } on FirebaseException catch (e) {
+      if (e.code == 'object-not-found' || e.code == 'bucket-not-found') {
+        throw 'Firebase Storage bucket was not found. Please verify Firebase Storage is enabled in the Firebase Console.';
+      }
       throw e.message ?? 'Failed to upload receipt image';
+    } catch (e) {
+      throw 'Upload failed: $e';
     }
   }
 
