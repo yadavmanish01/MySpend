@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -93,6 +94,37 @@ class _ActivityContentState extends State<_ActivityContent> {
     );
   }
 
+  List<double> _calculateDailyTotals(List<QueryDocumentSnapshot> transactions) {
+    List<double> dailyTotals = List.filled(7, 0.0);
+    final now = DateTime.now();
+    final startOfWeek = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+
+    for (var doc in transactions) {
+      final data = doc.data() as Map<String, dynamic>;
+      final isExpense = data['isExpense'] as bool? ?? true;
+      if (!isExpense) continue;
+
+      final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+      DateTime? date;
+
+      if (data['date'] is Timestamp) {
+        date = (data['date'] as Timestamp).toDate();
+      } else if (data['createdAt'] is Timestamp) {
+        date = (data['createdAt'] as Timestamp).toDate();
+      }
+
+      if (date != null) {
+        final difference = date.difference(startOfWeek).inDays;
+        if (difference >= 0 && difference < 7) {
+          dailyTotals[difference] += amount;
+        }
+      }
+    }
+
+    return dailyTotals;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,7 +138,8 @@ class _ActivityContentState extends State<_ActivityContent> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Transactions & Analytics", style: AppTextStyles.headingLarge),
+                  Text("Transactions & Analytics",
+                      style: AppTextStyles.headingLarge),
                   IconButton(
                     icon: const Icon(Icons.file_download_outlined,
                         color: AppColors.primary),
@@ -115,137 +148,100 @@ class _ActivityContentState extends State<_ActivityContent> {
                 ],
               ),
               15.ph,
-              // Analytics Bar Chart Card
-              Container(
-                width: MediaQuery.of(context).size.width,
-                height: 220,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Weekly Analytics",
-                            style: AppTextStyles.headingMedium),
-                        const Icon(Icons.bar_chart_rounded,
-                            color: AppColors.primary),
+              // Dynamic Analytics Bar Chart Card
+              BlocBuilder<ActivityBloc, ActivityState>(
+                builder: (context, state) {
+                  final dailyTotals = _calculateDailyTotals(state.transactions);
+                  final maxVal = dailyTotals.reduce((a, b) => a > b ? a : b);
+                  final chartMaxY = maxVal > 0 ? maxVal * 1.2 : 100.0;
+
+                  return Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: 220,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
-                    15.ph,
-                    Expanded(
-                      child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY: 100,
-                          barTouchData: BarTouchData(enabled: true),
-                          titlesData: FlTitlesData(
-                            show: true,
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (value, meta) {
-                                  const days = [
-                                    'Mon',
-                                    'Tue',
-                                    'Wed',
-                                    'Thu',
-                                    'Fri',
-                                    'Sat',
-                                    'Sun'
-                                  ];
-                                  if (value.toInt() >= 0 &&
-                                      value.toInt() < days.length) {
-                                    return Text(days[value.toInt()],
-                                        style: AppTextStyles.caption);
-                                  }
-                                  return const Text('');
-                                },
-                              ),
-                            ),
-                            leftTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            topTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                          ),
-                          gridData: const FlGridData(show: false),
-                          borderData: FlBorderData(show: false),
-                          barGroups: [
-                            BarChartGroupData(
-                                x: 0,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 45,
-                                      color: AppColors.primary,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 1,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 70,
-                                      color: AppColors.primary,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 2,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 30,
-                                      color: AppColors.primary,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 3,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 85,
-                                      color: AppColors.Error,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 4,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 50,
-                                      color: AppColors.primary,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 5,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 90,
-                                      color: AppColors.Success,
-                                      width: 14)
-                                ]),
-                            BarChartGroupData(
-                                x: 6,
-                                barRods: [
-                                  BarChartRodData(
-                                      toY: 20,
-                                      color: AppColors.primary,
-                                      width: 14)
-                                ]),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Weekly Expense Analytics",
+                                style: AppTextStyles.headingMedium),
+                            const Icon(Icons.bar_chart_rounded,
+                                color: AppColors.primary),
                           ],
                         ),
-                      ),
+                        15.ph,
+                        Expanded(
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: chartMaxY,
+                              barTouchData: const BarTouchData(enabled: true),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, meta) {
+                                      const days = [
+                                        'Mon',
+                                        'Tue',
+                                        'Wed',
+                                        'Thu',
+                                        'Fri',
+                                        'Sat',
+                                        'Sun'
+                                      ];
+                                      final index = value.toInt();
+                                      if (index >= 0 && index < days.length) {
+                                        return Text(days[index],
+                                            style: AppTextStyles.caption);
+                                      }
+                                      return const Text('');
+                                    },
+                                  ),
+                                ),
+                                leftTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                topTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              gridData: const FlGridData(show: false),
+                              borderData: FlBorderData(show: false),
+                              barGroups: List.generate(7, (i) {
+                                return BarChartGroupData(
+                                  x: i,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: dailyTotals[i],
+                                      color: AppColors.primary,
+                                      width: 14,
+                                      borderRadius: BorderRadius.circular(4),
+                                    )
+                                  ],
+                                );
+                              }),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
               20.ph,
               CustomFormField(
