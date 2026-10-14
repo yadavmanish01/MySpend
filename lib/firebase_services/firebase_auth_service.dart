@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -20,6 +21,26 @@ class FirebaseAuthService {
         password: password,
       );
       return credential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  /// Sign in with Google
+  Future<UserCredential?> continueWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
+      if (account == null) return null;
+
+      final GoogleSignInAuthentication googleAuth = await account.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _auth.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
@@ -67,7 +88,7 @@ class FirebaseAuthService {
       case 'invalid-email':
         return 'The email address is invalid.';
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'The password specified is too weak.';
       case 'user-disabled':
         return 'This user account has been disabled.';
       default:
