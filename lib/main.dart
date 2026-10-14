@@ -20,6 +20,7 @@ import 'lib/home/savingGoals/savingGoadDetails/savingDetailsView.dart';
 import 'lib/home/savingGoals/savingGoalsview.dart';
 import 'lib/home/scanReceipt/scanReceipt.dart';
 import 'lib/notification/notificationView.dart';
+import 'lib/onboarding/onboardingView.dart';
 import 'lib/splash/splashview.dart';
 import 'routes/routesName.dart';
 
@@ -62,6 +63,11 @@ class MyApp extends StatelessWidget {
         name: Routesname.splash,
         path: "/",
         builder: ((context, state) => const Splashview()),
+      ),
+      GoRoute(
+        name: Routesname.onboarding,
+        path: "/onboarding",
+        builder: ((context, state) => const OnboardingView()),
       ),
       GoRoute(
         name: Routesname.login,

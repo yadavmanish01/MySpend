@@ -1,9 +1,9 @@
-
 class Routesname {
   //auth
+  static const splash = 'splash';
+  static const onboarding = 'onboarding';
   static const login = 'login';
   static const signup = 'signup';
-  static const splash = 'splash';
   static const profile = 'profile';
   static const budgets = 'budgets';
   static const home = 'home';
