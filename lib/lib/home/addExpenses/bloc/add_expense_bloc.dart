@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
@@ -12,6 +13,7 @@ class AddExpenseBloc extends Bloc<AddExpenseEvent, AddExpenseState> {
   AddExpenseBloc() : super(const AddExpenseState()) {
     on<AmountChangedEvent>(_onAmountChanged);
     on<CategoryChangedEvent>(_onCategoryChanged);
+    on<AddCategoryEvent>(_onAddCategory);
     on<NotesChangedEvent>(_onNotesChanged);
     on<TransactionTypeChangedEvent>(_onTransactionTypeChanged);
     on<SaveExpenseSubmittedEvent>(_onSaveExpenseSubmitted);
@@ -25,6 +27,20 @@ class AddExpenseBloc extends Bloc<AddExpenseEvent, AddExpenseState> {
   void _onCategoryChanged(
       CategoryChangedEvent event, Emitter<AddExpenseState> emit) {
     emit(state.copyWith(category: event.category));
+  }
+
+  void _onAddCategory(
+      AddCategoryEvent event, Emitter<AddExpenseState> emit) {
+    final updatedList = List<Map<String, dynamic>>.from(state.categories)
+      ..add({
+        "name": event.categoryName,
+        "amount": "₹0",
+        "icon": Icons.category_rounded,
+      });
+    emit(state.copyWith(
+      categories: updatedList,
+      category: event.categoryName,
+    ));
   }
 
   void _onNotesChanged(

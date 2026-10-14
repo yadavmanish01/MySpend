@@ -23,6 +23,14 @@ class CategoryChangedEvent extends AddExpenseEvent {
   List<Object?> get props => [category];
 }
 
+class AddCategoryEvent extends AddExpenseEvent {
+  final String categoryName;
+  const AddCategoryEvent(this.categoryName);
+
+  @override
+  List<Object?> get props => [categoryName];
+}
+
 class NotesChangedEvent extends AddExpenseEvent {
   final String notes;
   const NotesChangedEvent(this.notes);

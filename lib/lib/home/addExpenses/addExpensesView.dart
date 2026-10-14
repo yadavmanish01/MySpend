@@ -35,39 +35,6 @@ class _AddExpenseContentState extends State<_AddExpenseContent> {
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
-  final List<Map<String, dynamic>> _categories = [
-    {
-      "name": "Food",
-      "amount": "₹8,240",
-      "icon": Icons.fastfood_rounded,
-    },
-    {
-      "name": "Travel",
-      "amount": "₹4,580",
-      "icon": Icons.directions_car_rounded,
-    },
-    {
-      "name": "Bills",
-      "amount": "₹5,000",
-      "icon": Icons.receipt_long_rounded,
-    },
-    {
-      "name": "Shopping",
-      "amount": "₹3,800",
-      "icon": Icons.shopping_bag_rounded,
-    },
-    {
-      "name": "Health",
-      "amount": "₹1,920",
-      "icon": Icons.medical_services_rounded,
-    },
-    {
-      "name": "Other",
-      "amount": "₹880",
-      "icon": Icons.more_horiz_rounded,
-    },
-  ];
-
   @override
   void dispose() {
     _amountController.dispose();
@@ -85,128 +52,136 @@ class _AddExpenseContentState extends State<_AddExpenseContent> {
       ),
       backgroundColor: const Color(0xFFF7F9FC),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: MediaQuery.of(context).size.height * 0.65,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              10.ph,
-              Text(
-                "Categories",
-                style: AppTextStyles.headingLarge.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E212A),
-                ),
-              ),
-              20.ph,
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    childAspectRatio: 2.2,
-                  ),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final item = _categories[index];
-                    final isSelected =
-                        _categoryController.text == item["name"];
+        return BlocProvider.value(
+          value: BlocProvider.of<AddExpenseBloc>(parentContext),
+          child: BlocBuilder<AddExpenseBloc, AddExpenseState>(
+            builder: (context, state) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                height: MediaQuery.of(context).size.height * 0.65,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    10.ph,
+                    Text(
+                      "Categories",
+                      style: AppTextStyles.headingLarge.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E212A),
+                      ),
+                    ),
+                    20.ph,
+                    Expanded(
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 2.2,
+                        ),
+                        itemCount: state.categories.length,
+                        itemBuilder: (context, index) {
+                          final item = state.categories[index];
+                          final isSelected = state.category == item["name"];
 
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          _categoryController.text = item["name"];
-                        });
-                        parentContext.read<AddExpenseBloc>().add(
-                              CategoryChangedEvent(item["name"]),
-                            );
-                        Navigator.pop(context);
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEEF2FF),
-                                shape: BoxShape.circle,
+                          return InkWell(
+                            onTap: () {
+                              _categoryController.text = item["name"];
+                              context
+                                  .read<AddExpenseBloc>()
+                                  .add(CategoryChangedEvent(item["name"]));
+                              Navigator.pop(context);
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
                               ),
-                              child: Icon(
-                                item["icon"] as IconData,
-                                color: AppColors.primary,
-                                size: 20,
-                              ),
-                            ),
-                            10.pw,
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item["name"],
-                                    style: AppTextStyles.bodyLarge.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
                                   ),
-                                  2.ph,
-                                  Text(
-                                    item["amount"],
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.textMuted,
-                                      fontSize: 12,
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEEF2FF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      item["icon"] as IconData,
+                                      color: AppColors.primary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  10.pw,
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item["name"],
+                                          style:
+                                              AppTextStyles.bodyLarge.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        2.ph,
+                                        Text(
+                                          item["amount"],
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: AppColors.textMuted,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    15.ph,
+                    CustomButton(
+                      title: "Add Category",
+                      prefixIcon: Icons.add,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showCustomCategoryDialog(parentContext);
+                      },
+                    ),
+                    15.ph,
+                  ],
                 ),
-              ),
-              15.ph,
-              CustomButton(
-                title: "Add Category",
-                prefixIcon: Icons.add,
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showCustomCategoryDialog(parentContext);
-                },
-              ),
-              15.ph,
-            ],
+              );
+            },
           ),
         );
       },
@@ -239,17 +214,10 @@ class _AddExpenseContentState extends State<_AddExpenseContent> {
               onPressed: () {
                 final text = customCategoryController.text.trim();
                 if (text.isNotEmpty) {
-                  setState(() {
-                    _categoryController.text = text;
-                    _categories.add({
-                      "name": text,
-                      "amount": "₹0",
-                      "icon": Icons.category_rounded,
-                    });
-                  });
+                  _categoryController.text = text;
                   parentContext
                       .read<AddExpenseBloc>()
-                      .add(CategoryChangedEvent(text));
+                      .add(AddCategoryEvent(text));
                   Navigator.pop(dialogContext);
                 }
               },

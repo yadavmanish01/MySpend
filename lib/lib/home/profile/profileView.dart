@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:my_spend/data/response/postApiStatus.dart';
 import 'package:my_spend/firebase_services/firebase_analytics_service.dart';
 import 'package:my_spend/firebase_services/firebase_auth_service.dart';
+import 'package:my_spend/lib/home/profile/bloc/profile_bloc.dart';
+import 'package:my_spend/lib/home/profile/bloc/profile_event.dart';
+import 'package:my_spend/lib/home/profile/bloc/profile_state.dart';
 import 'package:my_spend/lib/home/profile/logout/logout_bloc.dart';
 import 'package:my_spend/lib/home/profile/personal_info/personal_info_view.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
-import 'package:my_spend/services/local_auth_service.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/services/pdf_csv_export_service.dart';
@@ -21,52 +23,20 @@ class Profileview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LogoutBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => LogoutBloc()),
+        BlocProvider(create: (context) => ProfileBloc()),
+      ],
       child: const _ProfileContent(),
     );
   }
 }
 
-class _ProfileContent extends StatefulWidget {
+class _ProfileContent extends StatelessWidget {
   const _ProfileContent();
 
-  @override
-  State<_ProfileContent> createState() => _ProfileContentState();
-}
-
-class _ProfileContentState extends State<_ProfileContent> {
-  bool _biometricEnabled = true;
-
-  Future<void> _toggleBiometrics(bool value) async {
-    if (value) {
-      final bool authenticated = await LocalAuthService().authenticate();
-      if (authenticated) {
-        setState(() => _biometricEnabled = true);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Biometric Lock Enabled Successfully!"),
-              backgroundColor: AppColors.Success,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Biometric Authentication Failed"),
-              backgroundColor: AppColors.Error,
-            ),
-          );
-        }
-      }
-    } else {
-      setState(() => _biometricEnabled = false);
-    }
-  }
-
-  void _showExportBottomSheet() {
+  void _showExportBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -182,7 +152,7 @@ class _ProfileContentState extends State<_ProfileContent> {
               child: const Text('Yes', style: AppTextStyles.bodyLarge),
               onPressed: () {
                 dialogContext.pop();
-                parentContext.read<LogoutBloc>().add( LogoutButtonPressed());
+                parentContext.read<LogoutBloc>().add(LogoutButtonPressed());
               },
             ),
           ],
@@ -195,27 +165,43 @@ class _ProfileContentState extends State<_ProfileContent> {
   Widget build(BuildContext context) {
     final user = FirebaseAuthService().currentUser;
 
-    return BlocListener<LogoutBloc, LogoutState>(
-      listener: (context, state) {
-        if (state.postApiStatus == PostApiStatus.loading) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => const PopScope(
-              canPop: false,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
-        } else if (state.postApiStatus == PostApiStatus.completed) {
-          Navigator.of(context, rootNavigator: true).pop();
-          context.go('/login');
-        } else if (state.postApiStatus == PostApiStatus.error) {
-          Navigator.of(context, rootNavigator: true).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message.isEmpty ? 'Logout failed' : state.message)),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<LogoutBloc, LogoutState>(
+          listener: (context, state) {
+            if (state.postApiStatus == PostApiStatus.loading) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const PopScope(
+                  canPop: false,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            } else if (state.postApiStatus == PostApiStatus.completed) {
+              Navigator.of(context, rootNavigator: true).pop();
+              context.go('/login');
+            } else if (state.postApiStatus == PostApiStatus.error) {
+              Navigator.of(context, rootNavigator: true).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message.isEmpty ? 'Logout failed' : state.message)),
+              );
+            }
+          },
+        ),
+        BlocListener<ProfileBloc, ProfileState>(
+          listener: (context, state) {
+            if (state.message != null && state.message!.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message!),
+                  backgroundColor: state.biometricEnabled ? AppColors.Success : AppColors.Error,
+                ),
+              );
+            }
+          },
+        ),
+      ],
       child: SafeArea(
         child: Scaffold(
           body: SingleChildScrollView(
@@ -276,34 +262,40 @@ class _ProfileContentState extends State<_ProfileContent> {
                   },
                 ),
                 15.ph,
-                // Biometric App Lock Tile
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                // Biometric App Lock Tile with BLoC
+                BlocBuilder<ProfileBloc, ProfileState>(
+                  builder: (context, state) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Biometric Security", style: AppTextStyles.bodyLarge),
-                      Switch(
-                        activeThumbColor: AppColors.primary,
-                        value: _biometricEnabled,
-                        onChanged: _toggleBiometrics,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Biometric Security", style: AppTextStyles.bodyLarge),
+                          Switch(
+                            activeThumbColor: AppColors.primary,
+                            value: state.biometricEnabled,
+                            onChanged: (val) {
+                              context.read<ProfileBloc>().add(ToggleBiometricEvent(val));
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 15.ph,
                 _buildMenuTile(
@@ -313,7 +305,7 @@ class _ProfileContentState extends State<_ProfileContent> {
                 15.ph,
                 _buildMenuTile(
                   title: "Export data",
-                  onTap: _showExportBottomSheet,
+                  onTap: () => _showExportBottomSheet(context),
                 ),
                 15.ph,
                 _buildMenuTile(
