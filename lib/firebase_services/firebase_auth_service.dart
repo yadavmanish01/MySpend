@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -20,6 +22,26 @@ class FirebaseAuthService {
         password: password,
       );
       return credential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  ///signin with google
+  void continueWithGoogle()async{
+    final webclientId= '513642196062-cbca08h1nuk3t85fsrk8rlpacgm97dmr.apps.googleusercontent.com';
+    try{
+      GoogleSignIn googleSignIn= GoogleSignIn.instance;
+      await googleSignIn.initialize(serverClientId: webclientId);
+      GoogleSignInAccount account = await googleSignIn.authenticate();
+      GoogleSignInAuthentication googleAuth = account.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken
+      );
+
+      await _auth.signInWithCredential(credential);
+
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
