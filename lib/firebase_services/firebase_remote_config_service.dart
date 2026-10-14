@@ -6,20 +6,25 @@ class FirebaseRemoteConfigService {
 
   /// Initialize and fetch Remote Config defaults
   Future<void> initRemoteConfig() async {
-    await _remoteConfig.setConfigSettings(
-      RemoteConfigSettings(
-        fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: kDebugMode ? Duration.zero : const Duration(hours: 1),
-      ),
-    );
+    try {
+      await _remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(seconds: 10),
+          minimumFetchInterval: kDebugMode ? Duration.zero : const Duration(hours: 1),
+        ),
+      );
 
-    await _remoteConfig.setDefaults(const {
-      'maintenance_mode': false,
-      'app_version_name': '1.0.0',
-      'currency_symbol': '₹',
-    });
+      await _remoteConfig.setDefaults(const {
+        'maintenance_mode': false,
+        'app_version_name': '1.0.0',
+        'currency_symbol': '₹',
+        'gemini_api_key': '',
+      });
 
-    await _remoteConfig.fetchAndActivate();
+      await _remoteConfig.fetchAndActivate();
+    } catch (e) {
+      debugPrint("RemoteConfig init error: $e");
+    }
   }
 
   /// Helper Getters
