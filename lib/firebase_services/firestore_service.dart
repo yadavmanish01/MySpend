@@ -34,7 +34,6 @@ class FirestoreService {
     return _usersRef.doc(uid).snapshots();
   }
 
-  // ==================== TRANSACTIONS / EXPENSES ====================
 
   /// Add a New Expense or Income Transaction
   Future<DocumentReference> addTransaction({
@@ -119,7 +118,7 @@ class FirestoreService {
     await _usersRef.doc(uid).collection('budgets').doc(category).delete();
   }
 
-  // ==================== SAVING GOALS ====================
+
 
   /// Add a New Saving Goal
   Future<DocumentReference> addSavingGoal({
