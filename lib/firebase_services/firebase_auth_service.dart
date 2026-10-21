@@ -29,7 +29,8 @@ class FirebaseAuthService {
   /// Sign in with Google
   Future<UserCredential?> continueWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final String webClientId = '513642196062-cbca08h1nuk3t85fsrk8rlpacgm97dmr.apps.googleusercontent.com';
+      final GoogleSignIn googleSignIn = GoogleSignIn(serverClientId: webClientId);
       final GoogleSignInAccount? account = await googleSignIn.signIn();
       if (account == null) return null;
 
