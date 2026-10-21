@@ -178,7 +178,9 @@ class _LoginBodyState extends State<_LoginBody> {
                 Align(
                   alignment: Alignment.center,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.read<LoginBloc>().add(const GoogleSignInSubmittedEvent());
+                    },
                     child: Text(
                       "Google",
                       style: AppTextStyles.bodyMedium.copyWith(
