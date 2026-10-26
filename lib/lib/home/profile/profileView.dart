@@ -12,6 +12,7 @@ import 'package:my_spend/lib/home/profile/logout/logout_bloc.dart';
 import 'package:my_spend/lib/home/profile/personal_info/personal_info_view.dart';
 import 'package:my_spend/lib/home/savingGoals/savingGoalsview.dart';
 import 'package:my_spend/lib/notification/notificationView.dart';
+import 'package:my_spend/services/dynamic_icon_service.dart';
 import 'package:my_spend/utils/Appstyle/appStyle.dart';
 import 'package:my_spend/utils/colorStyle/colorStyle.dart';
 import 'package:my_spend/utils/services/pdf_csv_export_service.dart';
@@ -299,8 +300,59 @@ class _ProfileContent extends StatelessWidget {
                 ),
                 15.ph,
                 _buildMenuTile(
-                  title: "Appearance",
-                  onTap: () {},
+                  title: "Change App Icon",
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                      ),
+                      builder: (ctx) => Container(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Select App Icon", style: AppTextStyles.headingLarge),
+                            20.ph,
+                            ListTile(
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFF5D5FEF),
+                                child: Icon(Icons.palette, color: Colors.white),
+                              ),
+                              title: const Text("Default (Indigo)"),
+                              onTap: () {
+                                DynamicIconService.changeIcon('default');
+                                Navigator.pop(ctx);
+                              },
+                            ),
+                            ListTile(
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFF1A1A2E),
+                                child: Icon(Icons.dark_mode, color: Colors.amber),
+                              ),
+                              title: const Text("Dark Theme"),
+                              onTap: () {
+                                DynamicIconService.changeIcon('dark');
+                                Navigator.pop(ctx);
+                              },
+                            ),
+                            ListTile(
+                              leading: const CircleAvatar(
+                                backgroundColor: Color(0xFFFF9933),
+                                child: Icon(Icons.flag, color: Colors.white),
+                              ),
+                              title: const Text("Indian Tricolour 🇮🇳"),
+                              onTap: () {
+                                DynamicIconService.changeIcon('tricolor');
+                                Navigator.pop(ctx);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 15.ph,
                 _buildMenuTile(

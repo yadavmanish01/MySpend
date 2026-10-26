@@ -33,10 +33,13 @@ public class MainActivity extends FlutterActivity {
 
         String defaultAlias = packageName + ".MainActivityDefault";
         String darkAlias = packageName + ".MainActivityDark";
+        String tricolorAlias = packageName + ".MainActivityTricolor";
 
         String targetEnable = defaultAlias;
         if ("dark".equalsIgnoreCase(iconName)) {
             targetEnable = darkAlias;
+        } else if ("tricolor".equalsIgnoreCase(iconName) || "indian".equalsIgnoreCase(iconName)) {
+            targetEnable = tricolorAlias;
         }
 
         if (pm.getComponentEnabledSetting(new ComponentName(packageName, targetEnable)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
@@ -49,11 +52,15 @@ public class MainActivity extends FlutterActivity {
             PackageManager.DONT_KILL_APP
         );
 
-        String targetDisable = targetEnable.equals(defaultAlias) ? darkAlias : defaultAlias;
-        pm.setComponentEnabledSetting(
-            new ComponentName(packageName, targetDisable),
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
-        );
+        String[] allAliases = {defaultAlias, darkAlias, tricolorAlias};
+        for (String alias : allAliases) {
+            if (!alias.equals(targetEnable)) {
+                pm.setComponentEnabledSetting(
+                    new ComponentName(packageName, alias),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP
+                );
+            }
+        }
     }
 }

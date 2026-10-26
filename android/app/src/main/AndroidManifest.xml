@@ -23,7 +23,7 @@
             android:name=".MainActivityDefault"
             android:enabled="true"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@mipmap/ic_launcher_default"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -31,12 +31,25 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Dark / Alternate App Icon Activity Alias -->
+        <!-- Dark App Icon Activity Alias -->
         <activity-alias
             android:name=".MainActivityDark"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@mipmap/ic_launcher_dark"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Indian Flag Tricolor App Icon Activity Alias -->
+        <activity-alias
+            android:name=".MainActivityTricolor"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_tricolor"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
