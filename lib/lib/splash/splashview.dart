@@ -27,25 +27,10 @@ class _SplashviewState extends State<Splashview> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.account_balance_wallet_rounded,
-                size: 58,
-                color: AppColors.primary,
-              ),
+            const CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.white,
+              backgroundImage: AssetImage('assets/images/logo.png'),
             ),
             20.ph,
             Text(
